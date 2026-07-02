@@ -1,0 +1,17 @@
+# Binaries
+terraform-provider-iru
+dist/
+
+# Go
+*.test
+*.out
+vendor/
+
+# Local terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+.DS_Store
