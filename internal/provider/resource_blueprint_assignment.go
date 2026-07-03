@@ -42,7 +42,13 @@ func (r *blueprintAssignmentResource) Schema(ctx context.Context, req resource.S
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Assigns a library item to an Iru Blueprint. This is an association " +
 			"resource: it manages one (blueprint, library item[, assignment node]) attachment. " +
-			"Any attribute change forces a new assignment.",
+			"Any attribute change forces a new assignment.\n\n" +
+			"**Map blueprint limitation:** the Iru API does not expose a map blueprint's node " +
+			"structure, so node IDs cannot be read back. If `assignment_node_id` is omitted, the " +
+			"item is placed on the map's default node; you can move it to a specific node in the " +
+			"Iru UI and it will not drift (Read only verifies the item is attached to the " +
+			"blueprint, not which node). Destroying/recreating the assignment resets it to the " +
+			"default node.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
