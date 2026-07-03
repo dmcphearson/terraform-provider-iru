@@ -54,11 +54,16 @@ func (r *customAppResource) Metadata(ctx context.Context, req resource.MetadataR
 }
 
 func (r *customAppResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	// File-derived metadata (file_url, file_updated, sha256) is recomputed by the
+	// server from the current binary. It must NOT use UseStateForUnknown: when
+	// file_key changes (a new binary), the plan would otherwise predict the stale
+	// value while the API returns the new one -> "inconsistent result after apply".
+	// file_url is additionally a short-lived presigned URL that changes every refresh.
+	// So these settle to "known after apply" whenever the resource changes.
 	computedStr := func(desc string) schema.StringAttribute {
 		return schema.StringAttribute{
 			Computed:            true,
 			MarkdownDescription: desc,
-			PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 		}
 	}
 	resp.Schema = schema.Schema{
