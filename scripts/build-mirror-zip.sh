@@ -46,6 +46,15 @@ for arch in arm64 amd64; do
   GOOS=darwin GOARCH="${arch}" CGO_ENABLED=0 \
     go build -ldflags "-s -w -X main.version=${VERSION}" -o "${out}" .
   chmod +x "${out}"
+  # Ad-hoc sign now so the binary's bytes are final. Go already ad-hoc-signs the
+  # native (arm64) build, but the cross-compiled amd64 binary is unsigned; if we
+  # left it unsigned the Iru postinstall would re-sign it in place, changing its
+  # bytes AFTER the lockfile was generated from this zip and breaking
+  # `terraform init` checksum verification on Intel Macs. Signing here keeps the
+  # zip, the installed mirror, and .terraform.lock.hcl referencing identical bytes.
+  if command -v codesign >/dev/null 2>&1; then
+    codesign --force --sign - "${out}" >/dev/null 2>&1 || echo "  WARN: codesign failed for ${target}"
+  fi
 done
 
 # Zip from inside the staging dir so the archive root is the HOSTNAME dir.
