@@ -26,14 +26,14 @@ type customProfileResource struct {
 }
 
 type customProfileModel struct {
-	ID          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	ProfileFile types.String `tfsdk:"profile_file"`
-	Active      types.Bool   `tfsdk:"active"`
-	RunsOnMac   types.Bool   `tfsdk:"runs_on_mac"`
-	RunsOnIPhone types.Bool  `tfsdk:"runs_on_iphone"`
-	RunsOnIPad  types.Bool   `tfsdk:"runs_on_ipad"`
-	RunsOnTV    types.Bool   `tfsdk:"runs_on_tv"`
+	ID           types.String `tfsdk:"id"`
+	Name         types.String `tfsdk:"name"`
+	ProfileFile  types.String `tfsdk:"profile_file"`
+	Active       types.Bool   `tfsdk:"active"`
+	RunsOnMac    types.Bool   `tfsdk:"runs_on_mac"`
+	RunsOnIPhone types.Bool   `tfsdk:"runs_on_iphone"`
+	RunsOnIPad   types.Bool   `tfsdk:"runs_on_ipad"`
+	RunsOnTV     types.Bool   `tfsdk:"runs_on_tv"`
 }
 
 func (r *customProfileResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {

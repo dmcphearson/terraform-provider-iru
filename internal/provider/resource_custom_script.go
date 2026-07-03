@@ -72,8 +72,8 @@ func (r *customScriptResource) Schema(ctx context.Context, req resource.SchemaRe
 				MarkdownDescription: "The script body.",
 			},
 			"remediation_script": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
+				Optional: true,
+				Computed: true,
 				MarkdownDescription: "Optional remediation script body. The API returns an " +
 					"empty string when unset; leaving this unconfigured adopts that value.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},

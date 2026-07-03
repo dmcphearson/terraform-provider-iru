@@ -24,7 +24,7 @@ type selfServiceCategoriesDataSource struct {
 }
 
 type selfServiceCategoriesModel struct {
-	Name    types.String              `tfsdk:"name"`
+	Name    types.String               `tfsdk:"name"`
 	Results []selfServiceCategoryModel `tfsdk:"results"`
 }
 

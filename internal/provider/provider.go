@@ -112,6 +112,9 @@ func (p *iruProvider) Resources(ctx context.Context) []func() resource.Resource 
 		NewCustomScriptResource,
 		NewTagResource,
 		NewCustomProfileResource,
+		NewCustomAppResource,
+		NewBlueprintResource,
+		NewBlueprintAssignmentResource,
 	}
 }
 

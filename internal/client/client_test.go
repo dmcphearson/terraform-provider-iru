@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
-	"time"
 	"testing"
+	"time"
 )
 
 func newTestClient(t *testing.T, h http.Handler) *Client {
