@@ -176,7 +176,7 @@ func (r *customAppResource) Create(ctx context.Context, req resource.CreateReque
 		resp.Diagnostics.AddError("Error creating custom app", err.Error())
 		return
 	}
-	applyAppResponse(&plan, out)
+	applyAppResponse(&plan, out, plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -195,7 +195,7 @@ func (r *customAppResource) Read(ctx context.Context, req resource.ReadRequest, 
 		resp.Diagnostics.AddError("Error reading custom app", err.Error())
 		return
 	}
-	applyAppResponse(&state, out)
+	applyAppResponse(&state, out, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -210,7 +210,7 @@ func (r *customAppResource) Update(ctx context.Context, req resource.UpdateReque
 		resp.Diagnostics.AddError("Error updating custom app", err.Error())
 		return
 	}
-	applyAppResponse(&plan, out)
+	applyAppResponse(&plan, out, plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -250,16 +250,20 @@ func appModelToClient(m customAppModel) client.CustomApp {
 	}
 }
 
-func applyAppResponse(dst *customAppModel, out *client.CustomApp) {
+// applyAppResponse maps the server response into dst. The API trims trailing
+// whitespace from the script bodies, so for each configured script we keep the prior
+// (configured/state) value when it differs only by trailing whitespace; otherwise we
+// adopt the server value. prior holds the plan on write and the state on read.
+func applyAppResponse(dst *customAppModel, out *client.CustomApp, prior customAppModel) {
 	dst.ID = types.StringValue(out.ID)
 	dst.Name = types.StringValue(out.Name)
 	dst.FileKey = types.StringValue(out.FileKey)
 	dst.InstallType = types.StringValue(out.InstallType)
 	dst.InstallEnforcement = types.StringValue(out.InstallEnforcement)
 	dst.UnzipLocation = types.StringValue(out.UnzipLocation)
-	dst.AuditScript = types.StringValue(out.AuditScript)
-	dst.PreinstallScript = types.StringValue(out.PreinstallScript)
-	dst.PostinstallScript = types.StringValue(out.PostinstallScript)
+	dst.AuditScript = preserveScript(prior.AuditScript, out.AuditScript)
+	dst.PreinstallScript = preserveScript(prior.PreinstallScript, out.PreinstallScript)
+	dst.PostinstallScript = preserveScript(prior.PostinstallScript, out.PostinstallScript)
 	dst.Active = types.BoolValue(out.Active)
 	dst.Restart = types.BoolValue(out.Restart)
 	dst.ShowInSelfService = types.BoolValue(out.ShowInSelfService)
@@ -269,4 +273,18 @@ func applyAppResponse(dst *customAppModel, out *client.CustomApp) {
 	dst.FileSize = types.Int64Value(out.FileSize)
 	dst.FileUpdated = types.StringValue(out.FileUpdated)
 	dst.SHA256 = types.StringValue(out.SHA256)
+}
+
+// preserveScript keeps the configured script body when it differs from the server's
+// only by trailing whitespace (which the API strips); otherwise it adopts the server
+// value. When prior is unset (null/unknown), the server value ("" when unset) is used
+// so the field settles on a known, stable value.
+func preserveScript(prior types.String, server string) types.String {
+	if prior.IsNull() || prior.IsUnknown() {
+		return types.StringValue(server)
+	}
+	if trimTrailing(prior.ValueString()) == trimTrailing(server) {
+		return prior
+	}
+	return types.StringValue(server)
 }
