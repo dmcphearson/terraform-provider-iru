@@ -95,8 +95,9 @@ func (c *Client) DeleteBlueprint(ctx context.Context, id string) error {
 }
 
 // --- Library item assignment -------------------------------------------------
-// Assign = POST, remove = DELETE on the same assign-library-item path (confirmed
-// via the endpoint's OPTIONS Allow header). Read membership via list-library-items.
+// Per the Iru API docs, assign and remove are two distinct POST endpoints:
+//   POST .../assign-library-item  and  POST .../remove-library-item
+// Read membership via list-library-items.
 
 type assignmentBody struct {
 	LibraryItemID    string `json:"library_item_id"`
@@ -112,7 +113,7 @@ func (c *Client) AssignLibraryItem(ctx context.Context, blueprintID, libraryItem
 // RemoveLibraryItem detaches a library item from a blueprint.
 func (c *Client) RemoveLibraryItem(ctx context.Context, blueprintID, libraryItemID, assignmentNodeID string) error {
 	body := assignmentBody{LibraryItemID: libraryItemID, AssignmentNodeID: assignmentNodeID}
-	return c.DoJSON(ctx, "DELETE", blueprintsPath+"/"+blueprintID+"/assign-library-item", body, nil)
+	return c.DoJSON(ctx, "POST", blueprintsPath+"/"+blueprintID+"/remove-library-item", body, nil)
 }
 
 // LibraryItemRef is an item returned by list-library-items.

@@ -7,9 +7,9 @@ import (
 	"testing"
 )
 
-// Assign must POST and remove must DELETE to the same assign-library-item path
-// (confirmed against the live endpoint's OPTIONS Allow header).
-func TestAssignAndRemoveUseCorrectMethods(t *testing.T) {
+// Assign and remove are distinct POST endpoints per the Iru API docs:
+// .../assign-library-item and .../remove-library-item.
+func TestAssignAndRemoveUseCorrectEndpoints(t *testing.T) {
 	var gotMethod, gotPath, gotBody string
 	c := newTestClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotMethod = r.Method
@@ -22,11 +22,8 @@ func TestAssignAndRemoveUseCorrectMethods(t *testing.T) {
 	if err := c.AssignLibraryItem(context.Background(), "bp1", "li1", "node1"); err != nil {
 		t.Fatalf("assign: %v", err)
 	}
-	if gotMethod != "POST" {
-		t.Errorf("assign method = %s, want POST", gotMethod)
-	}
-	if gotPath != "/api/v1/blueprints/bp1/assign-library-item" {
-		t.Errorf("assign path = %s", gotPath)
+	if gotMethod != "POST" || gotPath != "/api/v1/blueprints/bp1/assign-library-item" {
+		t.Errorf("assign = %s %s, want POST .../assign-library-item", gotMethod, gotPath)
 	}
 	if gotBody != `{"library_item_id":"li1","assignment_node_id":"node1"}` {
 		t.Errorf("assign body = %s", gotBody)
@@ -35,8 +32,8 @@ func TestAssignAndRemoveUseCorrectMethods(t *testing.T) {
 	if err := c.RemoveLibraryItem(context.Background(), "bp1", "li1", ""); err != nil {
 		t.Fatalf("remove: %v", err)
 	}
-	if gotMethod != "DELETE" {
-		t.Errorf("remove method = %s, want DELETE", gotMethod)
+	if gotMethod != "POST" || gotPath != "/api/v1/blueprints/bp1/remove-library-item" {
+		t.Errorf("remove = %s %s, want POST .../remove-library-item", gotMethod, gotPath)
 	}
 	// assignment_node_id omitempty: absent when empty.
 	if gotBody != `{"library_item_id":"li1"}` {
