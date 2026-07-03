@@ -79,10 +79,10 @@ func TestListAll_Paginates(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		// Page 1: 300 items (full page -> keep going); Page 2: 2 items (short -> stop).
 		if offset == "0" {
-			w.Write([]byte(`{"count":302,"results":[` + repeatTag(300) + `]}`))
+			_, _ = w.Write([]byte(`{"count":302,"results":[` + repeatTag(300) + `]}`))
 			return
 		}
-		w.Write([]byte(`{"count":302,"results":[{"id":"a","name":"a"},{"id":"b","name":"b"}]}`))
+		_, _ = w.Write([]byte(`{"count":302,"results":[{"id":"a","name":"a"},{"id":"b","name":"b"}]}`))
 	}))
 	tags, err := c.ListTags(context.Background())
 	if err != nil {
@@ -95,7 +95,7 @@ func TestListAll_Paginates(t *testing.T) {
 
 func TestGetTagByID_NotFoundWhenAbsent(t *testing.T) {
 	c := newTestClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"count":1,"results":[{"id":"a","name":"a"}]}`))
+		_, _ = w.Write([]byte(`{"count":1,"results":[{"id":"a","name":"a"}]}`))
 	}))
 	_, err := c.GetTagByID(context.Background(), "missing")
 	if !IsNotFound(err) {

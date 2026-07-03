@@ -169,7 +169,7 @@ func (r *blueprintResource) Create(ctx context.Context, req resource.CreateReque
 		resp.Diagnostics.AddError("Error creating blueprint", err.Error())
 		return
 	}
-	resp.Diagnostics.Append(applyBlueprint(ctx, &plan, out)...)
+	resp.Diagnostics.Append(applyBlueprint(&plan, out)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -188,7 +188,7 @@ func (r *blueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		resp.Diagnostics.AddError("Error reading blueprint", err.Error())
 		return
 	}
-	resp.Diagnostics.Append(applyBlueprint(ctx, &state, out)...)
+	resp.Diagnostics.Append(applyBlueprint(&state, out)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -208,7 +208,7 @@ func (r *blueprintResource) Update(ctx context.Context, req resource.UpdateReque
 		resp.Diagnostics.AddError("Error updating blueprint", err.Error())
 		return
 	}
-	resp.Diagnostics.Append(applyBlueprint(ctx, &plan, out)...)
+	resp.Diagnostics.Append(applyBlueprint(&plan, out)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -253,7 +253,7 @@ func blueprintFromModel(ctx context.Context, m blueprintModel) (client.Blueprint
 }
 
 // applyBlueprint maps the API response into the model.
-func applyBlueprint(ctx context.Context, dst *blueprintModel, out *client.Blueprint) diag.Diagnostics {
+func applyBlueprint(dst *blueprintModel, out *client.Blueprint) diag.Diagnostics {
 	var diags diag.Diagnostics
 	dst.ID = types.StringValue(out.ID)
 	dst.Name = types.StringValue(out.Name)

@@ -107,7 +107,7 @@ func (c *Client) do(ctx context.Context, method, path, contentType string, body 
 		}
 
 		respBody, _ := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
 			lastErr = &APIError{StatusCode: resp.StatusCode, Body: string(respBody)}

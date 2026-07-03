@@ -1,0 +1,17 @@
+version: "2"
+
+linters:
+  enable:
+    - misspell
+    - unconvert
+    - unparam
+  settings:
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: github.com/hashicorp/terraform-plugin-sdk
+              desc: This provider is built on terraform-plugin-framework; SDKv2 is not allowed.
+
+run:
+  timeout: 5m

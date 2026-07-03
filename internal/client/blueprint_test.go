@@ -43,7 +43,7 @@ func TestAssignAndRemoveUseCorrectEndpoints(t *testing.T) {
 
 func TestIsLibraryItemAssigned(t *testing.T) {
 	c := newTestClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"count":2,"results":[{"id":"li1","name":"a"},{"id":"li2","name":"b"}]}`))
+		_, _ = w.Write([]byte(`{"count":2,"results":[{"id":"li1","name":"a"},{"id":"li2","name":"b"}]}`))
 	}))
 	ok, err := c.IsLibraryItemAssigned(context.Background(), "bp1", "li2")
 	if err != nil || !ok {
@@ -62,7 +62,7 @@ func TestCustomAppFormEncoding(t *testing.T) {
 		gotCT = r.Header.Get("Content-Type")
 		b, _ := io.ReadAll(r.Body)
 		gotBody = string(b)
-		w.Write([]byte(`{"id":"a1","name":"App"}`))
+		_, _ = w.Write([]byte(`{"id":"a1","name":"App"}`))
 	}))
 	_, err := c.CreateCustomApp(context.Background(), CustomApp{
 		Name: "App", FileKey: "k", InstallType: "zip", InstallEnforcement: "install_once",

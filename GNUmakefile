@@ -19,6 +19,6 @@ fmt:
 	gofmt -s -w -e .
 
 generate:
-	cd tools && go generate ./...
+	cd tools && go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-dir .. -provider-name iru
 
 .PHONY: default build install test testacc lint fmt generate
