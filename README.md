@@ -62,6 +62,34 @@ To run against a local build, add a `dev_overrides` block to `~/.terraformrc`
 pointing `dmcphearson/iru` at your `$GOPATH/bin`, then run Terraform normally
 (skip `terraform init`).
 
+## Internal distribution (filesystem mirror via Iru)
+
+This provider is distributed to Fluency devices internally rather than through the
+public Terraform Registry. `make mirror-zip` builds a zip containing the macOS
+`arm64` + `amd64` binaries in Terraform's unpacked filesystem-mirror layout:
+
+```
+registry.terraform.io/dmcphearson/iru/<version>/darwin_arm64/terraform-provider-iru_v<version>
+registry.terraform.io/dmcphearson/iru/<version>/darwin_amd64/terraform-provider-iru_v<version>
+```
+
+An Iru custom app unzips this into the machine-wide mirror
+`/Library/Application Support/io.terraform/plugins`, which every user's Terraform
+searches automatically. After install, `terraform init` resolves `dmcphearson/iru`
+from the local mirror with a real lockfile and version pin — no registry, no
+`dev_overrides`.
+
+Shipping a new version:
+
+```bash
+make mirror-zip VERSION=0.1.0        # produces dist/iru-provider-0.1.0-mirror.zip
+```
+
+1. Upload the zip to Iru (console, or the `upload-custom-app` API).
+2. Copy the returned `file_key`.
+3. Set it as `iru_provider_file_key` in the `fluency-iru-config` `apps` component and
+   `terraform apply`. Devices pick up the new binary from Self Service.
+
 ## License
 
 [MPL-2.0](./LICENSE).

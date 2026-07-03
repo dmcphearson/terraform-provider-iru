@@ -21,4 +21,10 @@ fmt:
 generate:
 	cd tools && go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-dir .. -provider-name iru
 
-.PHONY: default build install test testacc lint fmt generate
+# Build a Terraform filesystem-mirror zip for internal distribution via Iru.
+# Override version with: make mirror-zip VERSION=0.2.0
+VERSION ?= 0.1.0
+mirror-zip:
+	./scripts/build-mirror-zip.sh $(VERSION)
+
+.PHONY: default build install test testacc lint fmt generate mirror-zip
