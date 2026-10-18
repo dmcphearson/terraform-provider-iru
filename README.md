@@ -46,9 +46,12 @@ library item types you manage.
 | `iru_custom_script` | resource |
 | `iru_custom_profile` | resource |
 | `iru_tag` | resource |
+| `iru_custom_app` | resource |
+| `iru_blueprint` | resource |
+| `iru_blueprint_assignment` | resource |
 | `iru_self_service_categories` | data source |
 
-Custom apps, IPA apps, and blueprints are in progress.
+IPA apps are in progress.
 
 ## Development
 
@@ -62,21 +65,22 @@ To run against a local build, add a `dev_overrides` block to `~/.terraformrc`
 pointing `dmcphearson/iru` at your `$GOPATH/bin`, then run Terraform normally
 (skip `terraform init`).
 
-## Internal distribution (filesystem mirror via Iru)
+## Offline and MDM-managed installation (filesystem mirror)
 
-This provider can be distributed to managed Macs through Iru rather than through the
-public Terraform Registry. `make mirror-zip` builds a zip containing the macOS
-`arm64` + `amd64` binaries in Terraform's unpacked filesystem-mirror layout:
+For Macs that can't reach the public registry, or where you want the provider
+version pinned centrally, you can install it into Terraform's filesystem mirror
+with Iru itself. `make mirror-zip` builds a zip containing the macOS `arm64` +
+`amd64` binaries in Terraform's unpacked filesystem-mirror layout:
 
 ```
 registry.terraform.io/dmcphearson/iru/<version>/darwin_arm64/terraform-provider-iru_v<version>
 registry.terraform.io/dmcphearson/iru/<version>/darwin_amd64/terraform-provider-iru_v<version>
 ```
 
-An Iru custom app unzips this into the machine-wide mirror
+Deploy it as an Iru custom app that unzips into the machine-wide mirror
 `/Library/Application Support/io.terraform/plugins`, which every user's Terraform
-searches automatically. After install, `terraform init` resolves `dmcphearson/iru`
-from the local mirror with a real lockfile and version pin — no registry, no
+searches automatically. `terraform init` then resolves `dmcphearson/iru` from the
+local mirror with a real lockfile and version pin, with no registry access and no
 `dev_overrides`.
 
 Shipping a new version:

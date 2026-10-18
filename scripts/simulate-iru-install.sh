@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # simulate-iru-install.sh — reproduce, locally, exactly what the Iru custom app
-# does when a dev installs "Terraform Provider: dmcphearson/iru" from Self Service:
+# does when a user installs the provider custom app from Self Service:
 #
 #   1. run preinstall.sh (as root)
 #   2. unzip the mirror zip into the MACHINE-WIDE Terraform filesystem mirror

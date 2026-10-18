@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # build-mirror-zip.sh — build a Terraform filesystem-mirror zip of this provider
-# for internal distribution via an Iru custom app.
+# for offline or MDM-managed installs via an Iru custom app.
 #
 # The zip contains the darwin_arm64 + darwin_amd64 provider binaries laid out in
 # Terraform's "unpacked" mirror structure:
