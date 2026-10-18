@@ -29,7 +29,7 @@ func (c *Client) UploadFile(ctx context.Context, t UploadTarget, path string) er
 	if err != nil {
 		return fmt.Errorf("opening upload file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	info, err := f.Stat()
 	if err != nil {
 		return fmt.Errorf("reading upload file: %w", err)
@@ -65,7 +65,7 @@ func (c *Client) UploadFile(ctx context.Context, t UploadTarget, path string) er
 	if err != nil {
 		return fmt.Errorf("uploading file: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 300 {
 		b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 		return &APIError{StatusCode: resp.StatusCode, Body: string(b)}
