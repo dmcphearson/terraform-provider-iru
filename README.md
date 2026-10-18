@@ -8,8 +8,8 @@ Published to the Terraform Registry as
 [`dmcphearson/iru`](https://registry.terraform.io/providers/dmcphearson/iru), with
 full documentation there.
 
-- **Import works on every resource**, by ID or by resource identity, so existing
-  tenants can be brought under Terraform.
+- **Existing tenants can be adopted.** Every resource imports by ID or identity, and
+  `terraform query` can list a tenant and generate the config and import blocks.
 - **Apps upload from a local file.** Point `source` at an installer or `.ipa`; the
   provider uploads it and re-uploads only when the file's SHA256 changes.
 - **Known API rules fail at plan, not halfway through apply.** Settings the Iru API
@@ -86,6 +86,11 @@ import {
 
 Blueprint assignments import as `blueprint_id:library_item_id`, plus
 `:assignment_node_id` on map blueprints that use conditional logic.
+
+To adopt a whole tenant at once, every resource has a list resource for
+`terraform query` (Terraform 1.14 or later), which writes the import blocks and
+config for you. See the
+[import an existing tenant guide](./docs/guides/import-existing-tenant.md).
 
 ## Known API limits
 
