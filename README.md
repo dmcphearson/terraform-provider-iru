@@ -2,7 +2,7 @@
 
 A Terraform provider for [Iru](https://www.iru.com) (formerly Kandji) endpoint
 management: blueprints and their assignments, custom scripts, custom profiles, custom
-and in-house apps, and tags, as code.
+and in-house apps, and tags, as code, plus lookups of devices and users.
 
 Published to the Terraform Registry as
 [`dmcphearson/iru`](https://registry.terraform.io/providers/dmcphearson/iru), with
@@ -70,6 +70,11 @@ example library items, blueprints and tags.
 | [`iru_custom_profiles`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/custom_profiles) | data source | List custom profiles, optionally by name |
 | [`iru_custom_scripts`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/custom_scripts) | data source | List custom scripts, optionally by name |
 | [`iru_tags`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/tags) | data source | List tags, optionally by name |
+| [`iru_devices`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/devices) | data source | List devices, filtered by blueprint, platform, serial, name, user or asset tag |
+| [`iru_device`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/device) | data source | One device by ID or exact serial number |
+| [`iru_device_details`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/device_details) | data source | A device's full detail record, as JSON |
+| [`iru_users`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/users) | data source | List directory users |
+| [`iru_user`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/user) | data source | One user by ID or email |
 | [`iru_self_service_categories`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/self_service_categories) | data source | Look up Self Service category IDs |
 
 ## Importing existing objects

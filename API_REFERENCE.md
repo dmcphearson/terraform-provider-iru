@@ -84,3 +84,24 @@ with `?page=` / `?limit=&offset=` pagination (limit max 300).
 - GET `/{id}/list-library-items` — items assigned to a blueprint.
 - POST `/{id}/assign-library-item` (JSON): `{library_item_id, assignment_node_id?}`
   (`assignment_node_id` not required for maps without conditional logic).
+
+## Devices — /api/v1/devices  (from the Postman collection; not yet verified live)
+- GET list returns a **bare array** (no envelope); `limit` (max 300) / `offset` paging.
+  Filters: `blueprint_id`, `platform` (`Mac|iPad|iPhone|AppleTV`), `serial_number`,
+  `device_name`, `user_email`, `user_name` (substring), `asset_tag`, `model`,
+  `os_version`, `mac_address`, `filevault_enabled`, `ordering`.
+- GET `/{device_id}`: `device_id, device_name, model, serial_number, platform, os_version,
+  last_check_in, user{id,email,name,is_archived}, asset_tag, blueprint_id, blueprint_name,
+  mdm_enabled, agent_installed, agent_version, is_missing, is_removed, first_enrollment,
+  last_enrollment, tags[]`. Polymorphic: non-applicable fields are blank. `user` is `""`
+  when unassigned.
+- GET `/{device_id}/details`: large nested record, shape varies by platform.
+- PATCH `/{device_id}`, notes under `/{device_id}/notes`, secrets under `/{device_id}/secrets/*`.
+
+## Users — /api/v1/users  (from the Postman collection; not yet verified live)
+- GET list: `{next, previous, results[]}` with a **cursor** in `next` (absolute URL; may
+  name the web host, not the API host). Default 25 per page. Filters: `email`, `id`,
+  `integration_id`, `archived`.
+- Item: `id, name, email, active, archived, department, job_title, device_count,
+  deprecated_user_id, created_at, updated_at, integration{id,uuid,name,type}` (nullable).
+- GET `/{user_id}`, DELETE `/{user_id}`.
