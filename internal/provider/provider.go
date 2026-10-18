@@ -9,6 +9,7 @@ import (
 
 	"github.com/dmcphearson/terraform-provider-iru/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/list"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -17,7 +18,10 @@ import (
 )
 
 // Ensure iruProvider satisfies the provider.Provider interface.
-var _ provider.Provider = &iruProvider{}
+var (
+	_ provider.Provider                  = &iruProvider{}
+	_ provider.ProviderWithListResources = &iruProvider{}
+)
 
 type iruProvider struct {
 	version string
@@ -105,6 +109,7 @@ func (p *iruProvider) Configure(ctx context.Context, req provider.ConfigureReque
 	c := client.New(apiURL, apiToken, p.version)
 	resp.ResourceData = c
 	resp.DataSourceData = c
+	resp.ListResourceData = c
 }
 
 func (p *iruProvider) Resources(ctx context.Context) []func() resource.Resource {
@@ -116,6 +121,18 @@ func (p *iruProvider) Resources(ctx context.Context) []func() resource.Resource 
 		NewBlueprintResource,
 		NewBlueprintAssignmentResource,
 		NewInHouseAppResource,
+	}
+}
+
+func (p *iruProvider) ListResources(ctx context.Context) []func() list.ListResource {
+	return []func() list.ListResource{
+		NewBlueprintListResource,
+		NewBlueprintAssignmentListResource,
+		NewCustomAppListResource,
+		NewCustomProfileListResource,
+		NewCustomScriptListResource,
+		NewInHouseAppListResource,
+		NewTagListResource,
 	}
 }
 

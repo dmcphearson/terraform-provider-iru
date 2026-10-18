@@ -118,3 +118,8 @@ func (c *Client) UpdateInHouseApp(ctx context.Context, id string, in InHouseApp)
 func (c *Client) DeleteInHouseApp(ctx context.Context, id string) error {
 	return c.DoJSON(ctx, "DELETE", inHouseAppsPath+"/"+id, nil, nil)
 }
+
+// ListInHouseApps returns all in-house apps (paginated).
+func (c *Client) ListInHouseApps(ctx context.Context) ([]InHouseApp, error) {
+	return listAll[InHouseApp](ctx, c, inHouseAppsPath)
+}

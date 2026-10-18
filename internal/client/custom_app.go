@@ -105,3 +105,8 @@ func (c *Client) UploadCustomApp(ctx context.Context, path string) (string, erro
 	}
 	return up.FileKey, nil
 }
+
+// ListCustomApps returns all custom apps (paginated).
+func (c *Client) ListCustomApps(ctx context.Context) ([]CustomApp, error) {
+	return listAll[CustomApp](ctx, c, customAppsPath)
+}
