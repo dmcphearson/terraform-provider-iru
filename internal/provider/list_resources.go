@@ -316,3 +316,38 @@ func NewBlueprintAssignmentListResource() list.ListResource {
 		},
 	}
 }
+
+// NewDeviceListResource lists enrolled devices. The list endpoint returns the
+// same fields as GET, so results are built without a request per device.
+func NewDeviceListResource() list.ListResource {
+	return &iruListResource{
+		typeName: "device", filterAttr: "blueprint_id",
+		filterDesc: "Only list devices on the blueprint with this ID.",
+		entries: func(ctx context.Context, c *client.Client, filter string) ([]listEntry, error) {
+			devices, err := c.ListDevices(ctx, client.DeviceFilter{BlueprintID: filter})
+			if err != nil {
+				return nil, err
+			}
+			out := make([]listEntry, 0, len(devices))
+			for i := range devices {
+				d := devices[i]
+				name := d.Name
+				if d.SerialNumber != "" {
+					name += " (" + d.SerialNumber + ")"
+				}
+				out = append(out, listEntry{
+					displayName: name,
+					identity:    idIdentityModel{ID: types.StringValue(d.ID)},
+					load: func(ctx context.Context) (any, error) {
+						var m deviceModel
+						if diags := applyDevice(ctx, &m, &d); diags.HasError() {
+							return nil, fmt.Errorf("%v", diags)
+						}
+						return &m, nil
+					},
+				})
+			}
+			return out, nil
+		},
+	}
+}

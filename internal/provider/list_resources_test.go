@@ -20,6 +20,7 @@ import (
 func fakeTenant(t *testing.T) *client.Client {
 	t.Helper()
 	pages := map[string]string{
+		"/api/v1/devices":                          `[{"device_id":"d1","device_name":"Mac","serial_number":"C02","user":"","tags":["eng"]}]`,
 		"/api/v1/tags":                             `{"count":1,"results":[{"id":"t1","name":"Eng"}]}`,
 		"/api/v1/library/custom-scripts":           `{"count":1,"results":[{"id":"s1","name":"Hello"}]}`,
 		"/api/v1/library/custom-scripts/s1":        `{"id":"s1","name":"Hello","execution_frequency":"once","script":"echo hi","active":true}`,
@@ -116,6 +117,7 @@ func TestListResources(t *testing.T) {
 		identityID  string // id identity, or library_item_id for assignments
 	}{
 		{NewTagListResource, "Eng", "t1"},
+		{NewDeviceListResource, "Mac (C02)", "d1"},
 		{NewCustomScriptListResource, "Hello", "s1"},
 		{NewCustomProfileListResource, "Wifi", "p1"},
 		{NewCustomAppListResource, "Tool", "a1"},
