@@ -35,3 +35,8 @@ func (c *Client) UpdateCustomScript(ctx context.Context, id string, in CustomScr
 func (c *Client) DeleteCustomScript(ctx context.Context, id string) error {
 	return c.DoJSON(ctx, "DELETE", customScriptsPath+"/"+id, nil, nil)
 }
+
+// ListCustomScripts returns all custom scripts (paginated).
+func (c *Client) ListCustomScripts(ctx context.Context) ([]CustomScript, error) {
+	return listAll[CustomScript](ctx, c, customScriptsPath)
+}

@@ -51,6 +51,10 @@ library item types you manage.
 | `iru_blueprint_assignment` | resource |
 | `iru_in_house_app` | resource |
 | `iru_self_service_categories` | data source |
+| `iru_tags` | data source |
+| `iru_blueprints` | data source |
+| `iru_custom_scripts` | data source |
+| `iru_custom_profiles` | data source |
 
 
 ## Development

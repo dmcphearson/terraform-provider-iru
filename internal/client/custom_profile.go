@@ -90,3 +90,8 @@ func (c *Client) UpdateCustomProfile(ctx context.Context, id string, in CustomPr
 func (c *Client) DeleteCustomProfile(ctx context.Context, id string) error {
 	return c.DoJSON(ctx, "DELETE", customProfilesPath+"/"+id, nil, nil)
 }
+
+// ListCustomProfiles returns all custom profiles (paginated).
+func (c *Client) ListCustomProfiles(ctx context.Context) ([]CustomProfile, error) {
+	return listAll[CustomProfile](ctx, c, customProfilesPath)
+}

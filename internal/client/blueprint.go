@@ -140,3 +140,8 @@ func (c *Client) IsLibraryItemAssigned(ctx context.Context, blueprintID, library
 	}
 	return false, nil
 }
+
+// ListBlueprints returns all blueprints (paginated).
+func (c *Client) ListBlueprints(ctx context.Context) ([]Blueprint, error) {
+	return listAll[Blueprint](ctx, c, blueprintsPath)
+}
