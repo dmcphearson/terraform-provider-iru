@@ -32,6 +32,8 @@ type Client struct {
 	token      string
 	userAgent  string
 	httpClient *http.Client
+	// uploadClient has no overall timeout: large uploads are bounded by ctx instead.
+	uploadClient *http.Client
 }
 
 // New builds a Client. baseURL is the full tenant API URL
@@ -44,6 +46,7 @@ func New(baseURL, token, version string) *Client {
 		httpClient: &http.Client{
 			Timeout: defaultTimeout,
 		},
+		uploadClient: &http.Client{},
 	}
 }
 

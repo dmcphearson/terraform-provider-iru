@@ -49,9 +49,9 @@ library item types you manage.
 | `iru_custom_app` | resource |
 | `iru_blueprint` | resource |
 | `iru_blueprint_assignment` | resource |
+| `iru_in_house_app` | resource |
 | `iru_self_service_categories` | data source |
 
-IPA apps are in progress.
 
 ## Development
 

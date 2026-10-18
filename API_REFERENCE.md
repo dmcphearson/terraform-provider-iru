@@ -56,13 +56,18 @@ with `?page=` / `?limit=&offset=` pagination (limit max 300).
 - **`sha256` is returned** → use for binary change detection (re-upload only on change).
 
 ## IPA Apps — /api/v1/library/ipa-apps  (4-step upload)
-1. POST `/upload` (JSON `{filename: "<file>"}`) → presigned S3
+1. POST `/upload` (JSON `{filename: "<file>"}`) → `{id, filename, sha256, expires,
+   post_url, post_data{...}, file_key}`; `id` is the pending upload id
 2. POST to S3 → 204
-3. Poll GET `/upload/{pending_upload_id}/status` until `VALIDATED`
-   (terminal failures: `UPLOAD_FAILED`, `VALIDATE_FAILED`)
+3. Poll GET `/upload/{pending_upload_id}/status` (~1s) until `VALIDATED`; `UPLOADING`
+   and `VALIDATING` are in progress, `UPLOAD_FAILED` / `VALIDATE_FAILED` are terminal
 4. POST `/library/ipa-apps` (JSON): `file_key, name, runs_on_iphone, runs_on_ipad,
-   runs_on_tv, active`
-- PATCH `/{id}` (JSON); pass `file_key` only to replace.
+   runs_on_tv, active` → 201, no documented body
+- PATCH `/{id}` (JSON); pass `file_key` only to replace. No documented body.
+- GET returns: `id, name, file_key, active, icon, ipad_icon, identifier, app_identifier,
+  app_name, app_version, supported_device_families[], minimum_os_version, file_url,
+  sha256, file_size, file_updated, created_at, updated_at, runs_on_iphone, runs_on_ipad,
+  runs_on_tv, runs_on_mac, runs_on_ipod, runs_on_watch`
 
 ## Blueprints — /api/v1/blueprints
 - POST (urlencoded): `name, color, description, icon, type (map),
