@@ -129,3 +129,13 @@ func (c *Client) GetDeviceDetails(ctx context.Context, id string) (json.RawMessa
 	}
 	return out, nil
 }
+
+// UpdateDevice patches a device. Only the keys in patch are sent; a nil value
+// clears that field. Accepted keys: user, asset_tag, blueprint_id, tags.
+func (c *Client) UpdateDevice(ctx context.Context, id string, patch map[string]any) (*Device, error) {
+	var out Device
+	if err := c.DoJSON(ctx, "PATCH", devicesPath+"/"+id, patch, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
