@@ -18,10 +18,11 @@ import (
 )
 
 var (
-	_ resource.Resource                = &customScriptResource{}
-	_ resource.ResourceWithConfigure   = &customScriptResource{}
-	_ resource.ResourceWithImportState = &customScriptResource{}
-	_ resource.ResourceWithIdentity    = &customScriptResource{}
+	_ resource.Resource                   = &customScriptResource{}
+	_ resource.ResourceWithConfigure      = &customScriptResource{}
+	_ resource.ResourceWithImportState    = &customScriptResource{}
+	_ resource.ResourceWithIdentity       = &customScriptResource{}
+	_ resource.ResourceWithValidateConfig = &customScriptResource{}
 )
 
 func NewCustomScriptResource() resource.Resource { return &customScriptResource{} }
@@ -202,6 +203,15 @@ func (r *customScriptResource) Delete(ctx context.Context, req resource.DeleteRe
 		}
 		resp.Diagnostics.AddError("Error deleting custom script", err.Error())
 	}
+}
+
+func (r *customScriptResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var cfg customScriptModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &cfg)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	validateSelfService("execution_frequency", cfg.ExecutionFrequency, cfg.ShowInSelfService, cfg.SelfServiceRecommended, &resp.Diagnostics)
 }
 
 func (r *customScriptResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

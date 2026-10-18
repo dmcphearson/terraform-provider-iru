@@ -9,6 +9,13 @@ Base URL: `https://<subdomain>.api.kandji.io` (US) / `.api.eu.kandji.io` (EU).
 Auth: `Authorization: Bearer <token>`. List envelope: `{count, next, previous, results[]}`
 with `?page=` / `?limit=&offset=` pagination (limit max 300).
 
+## Self Service rules (verified live, scripts and custom apps)
+- `no_enforcement` requires `show_in_self_service=true`
+  (400 `{"show_in_self_service":["Required when not enforcing install"]}`).
+- `self_service_recommended` is rejected, even as false, unless Self Service is on
+  (400 `{"self_service_recommended":["Cannot set without enabling self service"]}`).
+- Assigning an inactive item to a blueprint fails (400 `"Library Item is not active."`).
+
 ## Custom Scripts — /api/v1/library/custom-scripts
 - POST (JSON) / PATCH `/{id}` (JSON) / GET list / GET `/{id}` / DELETE `/{id}` (204)
 - Write fields: `name`, `execution_frequency` (enum: `once|every_15_min|every_day|no_enforcement`),
@@ -70,7 +77,8 @@ with `?page=` / `?limit=&offset=` pagination (limit max 300).
   runs_on_tv, runs_on_mac, runs_on_ipod, runs_on_watch`
 
 ## Blueprints — /api/v1/blueprints
-- POST (urlencoded): `name, color, description, icon, type (map),
+- POST (urlencoded): `name, color, description, icon, type (map only; "classic" →
+  400 "Invalid blueprint type", verified live),
   enrollment_code.code, enrollment_code.is_active, source.type, source.id`
 - PATCH `/{id}` (urlencoded). GET list / GET `/{id}` / DELETE `/{id}`.
 - GET `/{id}/list-library-items` — items assigned to a blueprint.

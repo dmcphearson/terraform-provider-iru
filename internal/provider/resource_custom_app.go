@@ -18,11 +18,12 @@ import (
 )
 
 var (
-	_ resource.Resource                = &customAppResource{}
-	_ resource.ResourceWithConfigure   = &customAppResource{}
-	_ resource.ResourceWithImportState = &customAppResource{}
-	_ resource.ResourceWithIdentity    = &customAppResource{}
-	_ resource.ResourceWithModifyPlan  = &customAppResource{}
+	_ resource.Resource                   = &customAppResource{}
+	_ resource.ResourceWithConfigure      = &customAppResource{}
+	_ resource.ResourceWithImportState    = &customAppResource{}
+	_ resource.ResourceWithIdentity       = &customAppResource{}
+	_ resource.ResourceWithModifyPlan     = &customAppResource{}
+	_ resource.ResourceWithValidateConfig = &customAppResource{}
 )
 
 func NewCustomAppResource() resource.Resource { return &customAppResource{} }
@@ -328,6 +329,15 @@ func (r *customAppResource) upload(ctx context.Context, plan customAppModel, dia
 		return "", false
 	}
 	return fileKey, true
+}
+
+func (r *customAppResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var cfg customAppModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &cfg)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	validateSelfService("install_enforcement", cfg.InstallEnforcement, cfg.ShowInSelfService, cfg.SelfServiceRecommended, &resp.Diagnostics)
 }
 
 func (r *customAppResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

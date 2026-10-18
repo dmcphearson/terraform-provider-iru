@@ -52,7 +52,10 @@ func customAppForm(in CustomApp) []byte {
 	if in.SelfServiceCategoryID != "" {
 		v.Set("self_service_category_id", in.SelfServiceCategoryID)
 	}
-	v.Set("self_service_recommended", strconv.FormatBool(in.SelfServiceRecommended))
+	// The API rejects self_service_recommended, even false, unless Self Service is on.
+	if in.ShowInSelfService {
+		v.Set("self_service_recommended", strconv.FormatBool(in.SelfServiceRecommended))
+	}
 	v.Set("active", strconv.FormatBool(in.Active))
 	v.Set("restart", strconv.FormatBool(in.Restart))
 	return []byte(v.Encode())

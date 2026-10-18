@@ -3,7 +3,7 @@ resource "iru_blueprint" "core" {
   description = "Baseline blueprint"
   icon        = "ss-files"
   color       = "aqua-500"
-  type        = "classic"
+  type        = "map"
 
   enrollment_code = {
     is_active = true

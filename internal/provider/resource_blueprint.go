@@ -23,6 +23,7 @@ var (
 	_ resource.ResourceWithConfigure   = &blueprintResource{}
 	_ resource.ResourceWithImportState = &blueprintResource{}
 	_ resource.ResourceWithIdentity    = &blueprintResource{}
+	_ resource.ResourceWithModifyPlan  = &blueprintResource{}
 )
 
 func NewBlueprintResource() resource.Resource { return &blueprintResource{} }
@@ -61,8 +62,9 @@ func (r *blueprintResource) Metadata(ctx context.Context, req resource.MetadataR
 func (r *blueprintResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages an Iru Blueprint. A blueprint groups library items and " +
-			"assignment rules. `type` is `classic` or `map`; map blueprints are seeded from a " +
-			"source blueprint at creation.",
+			"assignment rules. `type` is `classic` or `map`; the API creates only `map` " +
+			"blueprints, and existing classic blueprints can be imported. Map blueprints can be " +
+			"seeded from a source blueprint at creation.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -92,10 +94,11 @@ func (r *blueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"type": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				MarkdownDescription: "Blueprint type: `classic` or `map`. Changing forces replacement.",
-				Validators:          []validator.String{stringvalidator.OneOf("classic", "map")},
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Blueprint type: `classic` or `map`. New blueprints must be `map`; " +
+					"`classic` is accepted only for an imported classic blueprint. Changing forces replacement.",
+				Validators: []validator.String{stringvalidator.OneOf("classic", "map")},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
@@ -227,6 +230,29 @@ func (r *blueprintResource) Delete(ctx context.Context, req resource.DeleteReque
 			return
 		}
 		resp.Diagnostics.AddError("Error deleting blueprint", err.Error())
+	}
+}
+
+// ModifyPlan rejects a plan that would create a classic blueprint, which the API
+// refuses at apply.
+func (r *blueprintResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+	var prior, planned types.String
+	if !req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("type"), &prior)...)
+	}
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("type"), &planned)...)
+	checkBlueprintType(prior, planned, &resp.Diagnostics)
+}
+
+// checkBlueprintType fails when the plan creates, or replaces into, a classic
+// blueprint. Keeping an imported classic blueprint is fine.
+func checkBlueprintType(prior, planned types.String, diags *diag.Diagnostics) {
+	if planned.ValueString() == "classic" && prior.ValueString() != "classic" {
+		diags.AddAttributeError(path.Root("type"), "Cannot create a classic blueprint",
+			"The Iru API creates only map blueprints. Use type = \"map\", or import an existing classic blueprint.")
 	}
 }
 

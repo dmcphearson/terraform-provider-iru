@@ -3,12 +3,12 @@
 page_title: "iru_blueprint Resource - iru"
 subcategory: ""
 description: |-
-  Manages an Iru Blueprint. A blueprint groups library items and assignment rules. type is classic or map; map blueprints are seeded from a source blueprint at creation.
+  Manages an Iru Blueprint. A blueprint groups library items and assignment rules. type is classic or map; the API creates only map blueprints, and existing classic blueprints can be imported. Map blueprints can be seeded from a source blueprint at creation.
 ---
 
 # iru_blueprint (Resource)
 
-Manages an Iru Blueprint. A blueprint groups library items and assignment rules. `type` is `classic` or `map`; map blueprints are seeded from a source blueprint at creation.
+Manages an Iru Blueprint. A blueprint groups library items and assignment rules. `type` is `classic` or `map`; the API creates only `map` blueprints, and existing classic blueprints can be imported. Map blueprints can be seeded from a source blueprint at creation.
 
 ## Example Usage
 
@@ -18,7 +18,7 @@ resource "iru_blueprint" "core" {
   description = "Baseline blueprint"
   icon        = "ss-files"
   color       = "aqua-500"
-  type        = "classic"
+  type        = "map"
 
   enrollment_code = {
     is_active = true
@@ -40,7 +40,7 @@ resource "iru_blueprint" "core" {
 - `enrollment_code` (Attributes) Enrollment code settings. (see [below for nested schema](#nestedatt--enrollment_code))
 - `icon` (String) Icon identifier (e.g. `ss-files`).
 - `source_id` (String) For map blueprints: the source blueprint ID to seed from at creation. Used only on create; changing forces replacement.
-- `type` (String) Blueprint type: `classic` or `map`. Changing forces replacement.
+- `type` (String) Blueprint type: `classic` or `map`. New blueprints must be `map`; `classic` is accepted only for an imported classic blueprint. Changing forces replacement.
 
 ### Read-Only
 
