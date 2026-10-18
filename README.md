@@ -79,7 +79,11 @@ registry.terraform.io/dmcphearson/iru/<version>/darwin_amd64/terraform-provider-
 
 Deploy it as an Iru custom app that unzips into the machine-wide mirror
 `/Library/Application Support/io.terraform/plugins`, which every user's Terraform
-searches automatically. `terraform init` then resolves `dmcphearson/iru` from the
+searches automatically. Example custom app scripts are in
+[`examples/mirror-install`](./examples/mirror-install): `preinstall.sh` installs a
+pinned, checksum-verified Terraform if none is present, and `postinstall.sh` strips
+Gatekeeper quarantine, fixes permissions and ad-hoc signs the binaries if needed.
+`sudo scripts/simulate-iru-install.sh` runs the same install locally to test them. `terraform init` then resolves `dmcphearson/iru` from the
 local mirror with a real lockfile and version pin, with no registry access and no
 `dev_overrides`.
 

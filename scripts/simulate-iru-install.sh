@@ -16,7 +16,8 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SCRIPTS="${IRU_APP_SCRIPTS:?set IRU_APP_SCRIPTS to the folder with the custom app preinstall.sh and postinstall.sh}"
+# Defaults to the example scripts in examples/mirror-install; override with IRU_APP_SCRIPTS.
+SCRIPTS="${IRU_APP_SCRIPTS:-${REPO}/examples/mirror-install}"
 ZIP="${REPO}/dist/iru-provider-0.1.0-mirror.zip"
 MIRROR="/Library/Application Support/io.terraform/plugins"
 TREE="${MIRROR}/registry.terraform.io/dmcphearson"
