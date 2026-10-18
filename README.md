@@ -1,11 +1,26 @@
 # Terraform Provider for Iru (Kandji)
 
-A Terraform provider for [Iru](https://kandji.io) (formerly Kandji) endpoint
-management. Manage library items — custom scripts, custom profiles, tags, custom
-apps, and blueprints — as code.
+A Terraform provider for [Iru](https://www.iru.com) (formerly Kandji) endpoint
+management: blueprints and their assignments, custom scripts, custom profiles, custom
+and in-house apps, and tags, as code.
 
 Published to the Terraform Registry as
-[`dmcphearson/iru`](https://registry.terraform.io/providers/dmcphearson/iru).
+[`dmcphearson/iru`](https://registry.terraform.io/providers/dmcphearson/iru), with
+full documentation there.
+
+- **Import works on every resource**, by ID or by resource identity, so existing
+  tenants can be brought under Terraform.
+- **Apps upload from a local file.** Point `source` at an installer or `.ipa`; the
+  provider uploads it and re-uploads only when the file's SHA256 changes.
+- **Known API rules fail at plan, not halfway through apply.** Settings the Iru API
+  is known to reject are caught during `terraform plan` with a clear message.
+
+## Requirements
+
+- Terraform 1.0 or later. Import by resource identity needs Terraform 1.12 or later.
+- An Iru API token with permissions for the endpoints you manage.
+
+OpenTofu is not verified yet.
 
 ## Usage
 
@@ -13,13 +28,14 @@ Published to the Terraform Registry as
 terraform {
   required_providers {
     iru = {
-      source = "dmcphearson/iru"
+      source  = "dmcphearson/iru"
+      version = "~> 0.2"
     }
   }
 }
 
 provider "iru" {
-  # api_url and api_token are read from the environment by default:
+  # Read from the environment by default:
   #   export IRU_API_URL="https://acme.api.kandji.io"
   #   export IRU_API_TOKEN="..."   # keep tokens out of config
 }
@@ -34,28 +50,63 @@ resource "iru_custom_script" "hello" {
 
 ## Authentication
 
-The provider authenticates to a single Iru tenant with a bearer API token. Provide
-credentials via the `IRU_API_URL` / `IRU_API_TOKEN` environment variables (preferred)
-or the `api_url` / `api_token` provider arguments. The token needs scopes for the
-library item types you manage.
+The provider talks to one Iru tenant with a bearer API token. Set `IRU_API_URL` and
+`IRU_API_TOKEN` in the environment (preferred), or the `api_url` and `api_token`
+provider arguments. Grant the token API permissions for the objects you manage, for
+example library items, blueprints and tags.
 
-## Resources & data sources
+## Resources and data sources
 
-| Type | Kind |
-|------|------|
-| `iru_custom_script` | resource |
-| `iru_custom_profile` | resource |
-| `iru_tag` | resource |
-| `iru_custom_app` | resource |
-| `iru_blueprint` | resource |
-| `iru_blueprint_assignment` | resource |
-| `iru_in_house_app` | resource |
-| `iru_self_service_categories` | data source |
-| `iru_tags` | data source |
-| `iru_blueprints` | data source |
-| `iru_custom_scripts` | data source |
-| `iru_custom_profiles` | data source |
+| Name | Kind | Manages |
+|------|------|---------|
+| [`iru_blueprint`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/blueprint) | resource | Blueprints (new ones are `map`; existing classic blueprints can be imported) |
+| [`iru_blueprint_assignment`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/blueprint_assignment) | resource | Assign a library item to a blueprint |
+| [`iru_custom_app`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/custom_app) | resource | Custom apps; uploads the installer from a local `source` path |
+| [`iru_in_house_app`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/in_house_app) | resource | In-house `.ipa` apps for iPhone, iPad and Apple TV; uploads from `source` |
+| [`iru_custom_profile`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/custom_profile) | resource | Custom configuration profiles from a `.mobileconfig` |
+| [`iru_custom_script`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/custom_script) | resource | Custom scripts, with optional remediation |
+| [`iru_tag`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/tag) | resource | Tags |
+| [`iru_blueprints`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/blueprints) | data source | List blueprints, optionally by name |
+| [`iru_custom_profiles`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/custom_profiles) | data source | List custom profiles, optionally by name |
+| [`iru_custom_scripts`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/custom_scripts) | data source | List custom scripts, optionally by name |
+| [`iru_tags`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/tags) | data source | List tags, optionally by name |
+| [`iru_self_service_categories`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/self_service_categories) | data source | Look up Self Service category IDs |
 
+## Importing existing objects
+
+Every resource imports by its Iru ID, except assignments (below). With Terraform 1.12 or later you can also use
+resource identity:
+
+```hcl
+import {
+  to       = iru_tag.engineering
+  identity = { id = "00000000-0000-0000-0000-000000000000" }
+}
+```
+
+Blueprint assignments import as `blueprint_id:library_item_id`, plus
+`:assignment_node_id` on map blueprints that use conditional logic.
+
+## Known API limits
+
+The Iru API enforces these. The provider checks the first three at plan time.
+
+- New blueprints must be `type = "map"`. Classic blueprints can be imported and
+  managed but not created.
+- Scripts and custom apps with `no_enforcement` must set `show_in_self_service = true`.
+- `self_service_recommended` requires `show_in_self_service = true`.
+- Only active library items can be assigned to a blueprint.
+
+## Status
+
+Actively maintained. Coverage grows each release; open an issue to request a resource
+or report a bug.
+
+## Installing on managed Macs
+
+To deploy the provider through Iru itself, as a filesystem mirror with no registry
+access, see the
+[filesystem mirror guide](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/guides/filesystem-mirror).
 
 ## Development
 
@@ -63,54 +114,12 @@ library item types you manage.
 make build      # compile
 make test       # unit tests (mocked, no token needed)
 make install    # install to $GOPATH/bin for dev_overrides
+make generate   # regenerate docs/ from schemas, examples and templates/
 ```
 
 To run against a local build, add a `dev_overrides` block to `~/.terraformrc`
 pointing `dmcphearson/iru` at your `$GOPATH/bin`, then run Terraform normally
 (skip `terraform init`).
-
-## Offline and MDM-managed installation (filesystem mirror)
-
-For Macs that can't reach the public registry, or where you want the provider
-version pinned centrally, you can install it into Terraform's filesystem mirror
-with Iru itself. `make mirror-zip` builds a zip containing the macOS `arm64` +
-`amd64` binaries in Terraform's unpacked filesystem-mirror layout:
-
-```
-registry.terraform.io/dmcphearson/iru/<version>/darwin_arm64/terraform-provider-iru_v<version>
-registry.terraform.io/dmcphearson/iru/<version>/darwin_amd64/terraform-provider-iru_v<version>
-```
-
-Deploy it as an Iru custom app that unzips into the machine-wide mirror
-`/Library/Application Support/io.terraform/plugins`, which every user's Terraform
-searches automatically. Example custom app scripts are in
-[`examples/mirror-install`](./examples/mirror-install): `preinstall.sh` installs a
-pinned, checksum-verified Terraform if none is present, and `postinstall.sh` strips
-Gatekeeper quarantine, fixes permissions and ad-hoc signs the binaries if needed.
-`sudo scripts/simulate-iru-install.sh` runs the same install locally to test them. `terraform init` then resolves `dmcphearson/iru` from the
-local mirror with a real lockfile and version pin, with no registry access and no
-`dev_overrides`.
-
-When the CLI config has no `provider_installation` block, Terraform uses a provider
-found in that mirror exclusively, so versions that aren't in the mirror, such as a
-pre-release, report "no available releases match". To pull one from the registry,
-point `TF_CLI_CONFIG_FILE` at a config that installs directly:
-
-```hcl
-provider_installation {
-  direct {}
-}
-```
-
-Shipping a new version:
-
-```bash
-make mirror-zip VERSION=0.1.0        # produces dist/iru-provider-0.1.0-mirror.zip
-```
-
-Point the custom app's `source` at the zip in your Iru Terraform configuration and
-`terraform apply`. The provider uploads it, and devices pick up the new binary from
-Self Service.
 
 ## License
 
