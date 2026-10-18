@@ -43,7 +43,7 @@ func TestGetResourceIdentitySchemas(t *testing.T) {
 	for _, d := range resp.Diagnostics {
 		t.Errorf("diagnostic: %s: %s", d.Summary, d.Detail)
 	}
-	want := []string{"iru_custom_script", "iru_custom_profile", "iru_tag", "iru_custom_app", "iru_blueprint", "iru_blueprint_assignment"}
+	want := []string{"iru_custom_script", "iru_custom_profile", "iru_tag", "iru_custom_app", "iru_blueprint", "iru_blueprint_assignment", "iru_in_house_app"}
 	for _, name := range want {
 		if _, ok := resp.IdentitySchemas[name]; !ok {
 			t.Errorf("%s has no identity schema", name)
@@ -56,6 +56,7 @@ func TestImportState_ByIdentity(t *testing.T) {
 	ctx := context.Background()
 	for _, newRes := range []func() resource.Resource{
 		NewCustomScriptResource, NewCustomProfileResource, NewTagResource, NewCustomAppResource, NewBlueprintResource,
+		NewInHouseAppResource,
 	} {
 		r := newRes()
 		state, ident := emptyStateAndIdentity(t, r)
