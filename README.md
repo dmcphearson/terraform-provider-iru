@@ -91,6 +91,17 @@ Gatekeeper quarantine, fixes permissions and ad-hoc signs the binaries if needed
 local mirror with a real lockfile and version pin, with no registry access and no
 `dev_overrides`.
 
+When the CLI config has no `provider_installation` block, Terraform uses a provider
+found in that mirror exclusively, so versions that aren't in the mirror, such as a
+pre-release, report "no available releases match". To pull one from the registry,
+point `TF_CLI_CONFIG_FILE` at a config that installs directly:
+
+```hcl
+provider_installation {
+  direct {}
+}
+```
+
 Shipping a new version:
 
 ```bash
