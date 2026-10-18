@@ -3,24 +3,31 @@
 page_title: "iru_custom_app Resource - iru"
 subcategory: ""
 description: |-
-  Manages the configuration of an Iru Custom App library item. This resource is metadata-only: the installer binary is uploaded out of band and referenced by file_key. Changing file_key (after uploading a new binary) is how a new installer is rolled out.
+  Manages an Iru Custom App library item. Set source to a local installer and the provider uploads it, re-uploading only when the file's SHA256 changes. Alternatively set file_key to reference a binary uploaded out of band; changing it rolls out that binary.
 ---
 
 # iru_custom_app (Resource)
 
-Manages the configuration of an Iru Custom App library item. This resource is metadata-only: the installer binary is uploaded out of band and referenced by `file_key`. Changing `file_key` (after uploading a new binary) is how a new installer is rolled out.
+Manages an Iru Custom App library item. Set `source` to a local installer and the provider uploads it, re-uploading only when the file's SHA256 changes. Alternatively set `file_key` to reference a binary uploaded out of band; changing it rolls out that binary.
 
 ## Example Usage
 
 ```terraform
-# Metadata-only: the installer binary is uploaded out of band; reference it by
-# file_key. Update file_key after uploading a new binary to roll it out.
+# Upload a local installer. It is re-uploaded only when the file's SHA256 changes.
 resource "iru_custom_app" "swift_dialog" {
   name                = "swiftDialog"
-  file_key            = "tenants/.../library/custom_apps/dialog-2.5.6_8a412a32.pkg"
+  source              = "${path.module}/dialog-2.5.6.pkg"
   install_type        = "package"
   install_enforcement = "install_once"
   active              = true
+}
+
+# Or reference a binary uploaded out of band by its file_key.
+resource "iru_custom_app" "legacy_tool" {
+  name                = "Legacy Tool"
+  file_key            = "tenants/.../library/custom_apps/legacy-tool_8a412a32.pkg"
+  install_type        = "package"
+  install_enforcement = "install_once"
 }
 ```
 
@@ -29,7 +36,6 @@ resource "iru_custom_app" "swift_dialog" {
 
 ### Required
 
-- `file_key` (String) Storage key of the already-uploaded installer, returned by the upload flow / visible on the existing library item. Update this after uploading a new binary to roll it out.
 - `install_enforcement` (String) Enforcement mode. One of `install_once`, `continuously_enforce`, `no_enforcement`.
 - `install_type` (String) Installer type. One of `package`, `zip`, `image`.
 - `name` (String) Name of the custom app.
@@ -38,12 +44,14 @@ resource "iru_custom_app" "swift_dialog" {
 
 - `active` (Boolean) Whether the app is active.
 - `audit_script` (String) Audit script body.
+- `file_key` (String) Storage key of an installer uploaded out of band. Exactly one of `file_key` or `source` is required; with `source` this is set by the provider.
 - `postinstall_script` (String) Post-install script body.
 - `preinstall_script` (String) Pre-install script body.
 - `restart` (Boolean) Whether to restart after install.
 - `self_service_category_id` (String) Self Service category ID (from `iru_self_service_categories`).
 - `self_service_recommended` (Boolean) Whether the app is marked recommended in Self Service.
 - `show_in_self_service` (Boolean) Whether the app is offered in Self Service.
+- `source` (String) Local path to the installer (`.pkg`, `.zip` or `.dmg`) to upload.
 - `unzip_location` (String) Destination path for `zip` installs.
 
 ### Read-Only
@@ -53,6 +61,7 @@ resource "iru_custom_app" "swift_dialog" {
 - `file_url` (String) Short-lived download URL for the current binary.
 - `id` (String) Unique identifier of the custom app.
 - `sha256` (String) SHA256 of the current binary, as reported by the API.
+- `source_sha256` (String) SHA256 of the file at `source`, computed at plan time. A change triggers a new upload.
 
 ## Import
 

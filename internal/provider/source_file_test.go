@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func TestInHouseAppNeedsUpload(t *testing.T) {
+func TestNeedsUpload(t *testing.T) {
 	cases := []struct {
 		name         string
 		sourceSHA256 types.String
@@ -21,8 +21,7 @@ func TestInHouseAppNeedsUpload(t *testing.T) {
 	sums := []string{"aaa", "bbb", "bbb", "bbb"}
 	for i, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			state := inHouseAppModel{SourceSHA256: tc.sourceSHA256, SHA256: tc.apiSHA256}
-			if got := needsUpload(state, sums[i]); got != tc.want {
+			if got := needsUpload(tc.sourceSHA256, tc.apiSHA256, sums[i]); got != tc.want {
 				t.Errorf("needsUpload = %v, want %v", got, tc.want)
 			}
 		})

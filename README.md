@@ -93,10 +93,9 @@ Shipping a new version:
 make mirror-zip VERSION=0.1.0        # produces dist/iru-provider-0.1.0-mirror.zip
 ```
 
-1. Upload the zip to Iru (console, or the `upload-custom-app` API).
-2. Copy the returned `file_key`.
-3. Set it as the custom app's `file_key` in your Iru Terraform configuration and
-   `terraform apply`. Devices pick up the new binary from Self Service.
+Point the custom app's `source` at the zip in your Iru Terraform configuration and
+`terraform apply`. The provider uploads it, and devices pick up the new binary from
+Self Service.
 
 ## License
 

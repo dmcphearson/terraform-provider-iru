@@ -2,15 +2,16 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/url"
+	"path/filepath"
 	"strconv"
 )
 
 const customAppsPath = "/api/v1/library/custom-apps"
 
-// CustomApp models the /api/v1/library/custom-apps contract. The binary itself is
-// uploaded out of band; this provider manages the metadata around an existing
-// upload identified by FileKey. self_service fields ARE returned by GET here (unlike
+// CustomApp models the /api/v1/library/custom-apps contract. The binary is uploaded
+// first (UploadCustomApp, or out of band) and referenced by FileKey. self_service fields ARE returned by GET here (unlike
 // custom scripts), so they round-trip normally.
 type CustomApp struct {
 	ID                     string `json:"id,omitempty"`
@@ -87,4 +88,17 @@ func (c *Client) UpdateCustomApp(ctx context.Context, id string, in CustomApp) (
 // DeleteCustomApp removes a custom app by id.
 func (c *Client) DeleteCustomApp(ctx context.Context, id string) error {
 	return c.DoJSON(ctx, "DELETE", customAppsPath+"/"+id, nil, nil)
+}
+
+// UploadCustomApp uploads the installer at path and returns its file_key. Unlike
+// in-house apps there is no validation step to wait for.
+func (c *Client) UploadCustomApp(ctx context.Context, path string) (string, error) {
+	var up UploadTarget
+	if err := c.DoJSON(ctx, "POST", customAppsPath+"/upload", map[string]string{"name": filepath.Base(path)}, &up); err != nil {
+		return "", fmt.Errorf("requesting upload URL: %w", err)
+	}
+	if err := c.UploadFile(ctx, up, path); err != nil {
+		return "", err
+	}
+	return up.FileKey, nil
 }

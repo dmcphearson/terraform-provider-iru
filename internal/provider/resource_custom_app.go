@@ -6,6 +6,7 @@ import (
 
 	"github.com/dmcphearson/terraform-provider-iru/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -21,6 +22,7 @@ var (
 	_ resource.ResourceWithConfigure   = &customAppResource{}
 	_ resource.ResourceWithImportState = &customAppResource{}
 	_ resource.ResourceWithIdentity    = &customAppResource{}
+	_ resource.ResourceWithModifyPlan  = &customAppResource{}
 )
 
 func NewCustomAppResource() resource.Resource { return &customAppResource{} }
@@ -33,6 +35,8 @@ type customAppModel struct {
 	ID                     types.String `tfsdk:"id"`
 	Name                   types.String `tfsdk:"name"`
 	FileKey                types.String `tfsdk:"file_key"`
+	Source                 types.String `tfsdk:"source"`
+	SourceSHA256           types.String `tfsdk:"source_sha256"`
 	InstallType            types.String `tfsdk:"install_type"`
 	InstallEnforcement     types.String `tfsdk:"install_enforcement"`
 	UnzipLocation          types.String `tfsdk:"unzip_location"`
@@ -68,10 +72,10 @@ func (r *customAppResource) Schema(ctx context.Context, req resource.SchemaReque
 		}
 	}
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages the configuration of an Iru Custom App library item. " +
-			"This resource is metadata-only: the installer binary is uploaded out of band " +
-			"and referenced by `file_key`. Changing `file_key` (after uploading a new " +
-			"binary) is how a new installer is rolled out.",
+		MarkdownDescription: "Manages an Iru Custom App library item. Set `source` to a local " +
+			"installer and the provider uploads it, re-uploading only when the file's SHA256 " +
+			"changes. Alternatively set `file_key` to reference a binary uploaded out of band; " +
+			"changing it rolls out that binary.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -83,10 +87,22 @@ func (r *customAppResource) Schema(ctx context.Context, req resource.SchemaReque
 				MarkdownDescription: "Name of the custom app.",
 			},
 			"file_key": schema.StringAttribute{
-				Required: true,
-				MarkdownDescription: "Storage key of the already-uploaded installer, returned by the " +
-					"upload flow / visible on the existing library item. Update this after uploading " +
-					"a new binary to roll it out.",
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Storage key of an installer uploaded out of band. Exactly one of " +
+					"`file_key` or `source` is required; with `source` this is set by the provider.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Validators:    []validator.String{stringvalidator.ExactlyOneOf(path.MatchRoot("source"))},
+			},
+			"source": schema.StringAttribute{
+				Optional:            true,
+				MarkdownDescription: "Local path to the installer (`.pkg`, `.zip` or `.dmg`) to upload.",
+			},
+			"source_sha256": schema.StringAttribute{
+				Computed: true,
+				MarkdownDescription: "SHA256 of the file at `source`, computed at plan time. A change " +
+					"triggers a new upload.",
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"install_type": schema.StringAttribute{
 				Required:            true,
@@ -177,7 +193,15 @@ func (r *customAppResource) Create(ctx context.Context, req resource.CreateReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	out, err := r.client.CreateCustomApp(ctx, appModelToClient(plan))
+	in := appModelToClient(plan)
+	if !plan.Source.IsNull() {
+		fileKey, ok := r.upload(ctx, plan, &resp.Diagnostics)
+		if !ok {
+			return
+		}
+		in.FileKey = fileKey
+	}
+	out, err := r.client.CreateCustomApp(ctx, in)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating custom app", err.Error())
 		return
@@ -208,12 +232,25 @@ func (r *customAppResource) Read(ctx context.Context, req resource.ReadRequest, 
 }
 
 func (r *customAppResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan customAppModel
+	var plan, state customAppModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	out, err := r.client.UpdateCustomApp(ctx, plan.ID.ValueString(), appModelToClient(plan))
+	in := appModelToClient(plan)
+	if !plan.Source.IsNull() {
+		// file_key is sent only when replacing the binary.
+		in.FileKey = ""
+		if needsUpload(state.SourceSHA256, state.SHA256, plan.SourceSHA256.ValueString()) {
+			fileKey, ok := r.upload(ctx, plan, &resp.Diagnostics)
+			if !ok {
+				return
+			}
+			in.FileKey = fileKey
+		}
+	}
+	out, err := r.client.UpdateCustomApp(ctx, plan.ID.ValueString(), in)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating custom app", err.Error())
 		return
@@ -235,6 +272,62 @@ func (r *customAppResource) Delete(ctx context.Context, req resource.DeleteReque
 		}
 		resp.Diagnostics.AddError("Error deleting custom app", err.Error())
 	}
+}
+
+// ModifyPlan hashes the file at source so a changed installer shows in the plan, and
+// marks the binary-derived attributes unknown when it will be re-uploaded.
+func (r *customAppResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		return // destroy
+	}
+	var source types.String
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("source"), &source)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	switch {
+	case source.IsNull():
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("source_sha256"), types.StringNull())...)
+		return
+	case source.IsUnknown():
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("source_sha256"), types.StringUnknown())...)
+		markCustomAppBinaryUnknown(ctx, resp)
+		return
+	}
+	sum, err := fileSHA256(source.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(path.Root("source"), "Cannot read source file", err.Error())
+		return
+	}
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("source_sha256"), sum)...)
+	if req.State.Raw.IsNull() {
+		return // create: computed attributes are already unknown
+	}
+	var state customAppModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if needsUpload(state.SourceSHA256, state.SHA256, sum) {
+		markCustomAppBinaryUnknown(ctx, resp)
+	}
+}
+
+func markCustomAppBinaryUnknown(ctx context.Context, resp *resource.ModifyPlanResponse) {
+	for _, a := range []string{"file_key", "sha256", "file_url", "file_updated"} {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(a), types.StringUnknown())...)
+	}
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("file_size"), types.Int64Unknown())...)
+}
+
+// upload sends the installer after checking it still matches the planned hash.
+func (r *customAppResource) upload(ctx context.Context, plan customAppModel, diags *diag.Diagnostics) (string, bool) {
+	if !checkSourceUnchanged(plan.Source, plan.SourceSHA256, diags) {
+		return "", false
+	}
+	fileKey, err := r.client.UploadCustomApp(ctx, plan.Source.ValueString())
+	if err != nil {
+		diags.AddError("Error uploading custom app", err.Error())
+		return "", false
+	}
+	return fileKey, true
 }
 
 func (r *customAppResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

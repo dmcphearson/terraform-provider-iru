@@ -2,11 +2,7 @@ package provider
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/dmcphearson/terraform-provider-iru/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -171,7 +167,7 @@ func (r *inHouseAppResource) ModifyPlan(ctx context.Context, req resource.Modify
 	}
 	var state inHouseAppModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
-	if needsUpload(state, sum) {
+	if needsUpload(state.SourceSHA256, state.SHA256, sum) {
 		markFileDerivedUnknown(ctx, resp)
 	}
 }
@@ -181,13 +177,6 @@ func markFileDerivedUnknown(ctx context.Context, resp *resource.ModifyPlanRespon
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(a), types.StringUnknown())...)
 	}
 	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("file_size"), types.Int64Unknown())...)
-}
-
-// needsUpload reports whether a file with hash sum differs from what Iru already
-// holds. After an import source_sha256 is null, so the API's sha256 is compared too:
-// adopting an existing app whose binary matches does not re-upload it.
-func needsUpload(state inHouseAppModel, sum string) bool {
-	return sum != state.SourceSHA256.ValueString() && sum != state.SHA256.ValueString()
 }
 
 func (r *inHouseAppResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -240,7 +229,7 @@ func (r *inHouseAppResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 	in := inHouseAppModelToClient(plan)
-	if needsUpload(state, plan.SourceSHA256.ValueString()) {
+	if needsUpload(state.SourceSHA256, state.SHA256, plan.SourceSHA256.ValueString()) {
 		fileKey, ok := r.upload(ctx, plan, &resp.Diagnostics)
 		if !ok {
 			return
@@ -279,21 +268,12 @@ func (r *inHouseAppResource) IdentitySchema(ctx context.Context, req resource.Id
 	resp.IdentitySchema = idIdentitySchema()
 }
 
-// upload sends the .ipa after checking it still matches the planned hash, so the
-// binary that ships is the one the plan showed.
+// upload sends the .ipa after checking it still matches the planned hash.
 func (r *inHouseAppResource) upload(ctx context.Context, plan inHouseAppModel, diags *diag.Diagnostics) (string, bool) {
-	src := plan.Source.ValueString()
-	sum, err := fileSHA256(src)
-	if err != nil {
-		diags.AddAttributeError(path.Root("source"), "Cannot read source file", err.Error())
+	if !checkSourceUnchanged(plan.Source, plan.SourceSHA256, diags) {
 		return "", false
 	}
-	if !plan.SourceSHA256.IsUnknown() && sum != plan.SourceSHA256.ValueString() {
-		diags.AddAttributeError(path.Root("source"), "Source file changed since plan",
-			fmt.Sprintf("%s has SHA256 %s, the plan expected %s. Run plan again.", src, sum, plan.SourceSHA256.ValueString()))
-		return "", false
-	}
-	fileKey, err := r.client.UploadInHouseApp(ctx, src)
+	fileKey, err := r.client.UploadInHouseApp(ctx, plan.Source.ValueString())
 	if err != nil {
 		diags.AddError("Error uploading in-house app", err.Error())
 		return "", false
@@ -328,17 +308,4 @@ func applyInHouseAppResponse(m *inHouseAppModel, out *client.InHouseApp) {
 	m.AppName = types.StringValue(out.AppName)
 	m.AppVersion = types.StringValue(out.AppVersion)
 	m.MinimumOSVersion = types.StringValue(out.MinimumOSVersion)
-}
-
-func fileSHA256(p string) (string, error) {
-	f, err := os.Open(p)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(h.Sum(nil)), nil
 }

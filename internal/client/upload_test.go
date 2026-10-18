@@ -151,3 +151,29 @@ func TestCreateInHouseApp_FindsByFileKeyWhenBodyEmpty(t *testing.T) {
 		t.Errorf("id = %q, want b", out.ID)
 	}
 }
+
+func TestUploadCustomApp(t *testing.T) {
+	s3 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	t.Cleanup(s3.Close)
+	c := newTestClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/v1/library/custom-apps/upload" {
+			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+		}
+		var body map[string]string
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if body["name"] != "tool.pkg" {
+			t.Errorf("name = %q", body["name"])
+		}
+		_, _ = w.Write([]byte(`{"post_url":"` + s3.URL + `","file_key":"library/custom_apps/tool.pkg","post_data":{"key":"k"}}`))
+	}))
+
+	key, err := c.UploadCustomApp(context.Background(), writeTempFile(t, "tool.pkg", "pkg"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if key != "library/custom_apps/tool.pkg" {
+		t.Errorf("key = %q", key)
+	}
+}
