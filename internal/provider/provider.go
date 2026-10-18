@@ -143,5 +143,10 @@ func (p *iruProvider) DataSources(ctx context.Context) []func() datasource.DataS
 		NewBlueprintsDataSource,
 		NewCustomScriptsDataSource,
 		NewCustomProfilesDataSource,
+		NewDevicesDataSource,
+		NewDeviceDataSource,
+		NewDeviceDetailsDataSource,
+		NewUsersDataSource,
+		NewUserDataSource,
 	}
 }
