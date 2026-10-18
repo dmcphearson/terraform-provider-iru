@@ -106,7 +106,7 @@ or report a bug.
 
 To deploy the provider through Iru itself, as a filesystem mirror with no registry
 access, see the
-[filesystem mirror guide](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/guides/filesystem-mirror).
+[filesystem mirror guide](./docs/guides/filesystem-mirror.md).
 
 ## Development
 
