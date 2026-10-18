@@ -59,6 +59,9 @@ Generated config is a starting point. Before planning:
 - **`iru_blueprint_assignment`:** node IDs on map blueprints can't be read back, so
   generated assignments have no `assignment_node_id`. Moving an item between nodes in
   the Iru UI doesn't cause drift.
+- **`iru_device`:** devices can only be imported, never created, and destroying one only
+  removes it from state. Remove `tags`, `user_id` or `asset_tag` from the generated
+  config if you don't want Terraform to manage them.
 - Replace the IDs in references with resource references, for example
   `blueprint_id = iru_blueprint.core.id`, so Terraform orders changes correctly.
 

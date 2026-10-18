@@ -2,7 +2,8 @@
 
 A Terraform provider for [Iru](https://www.iru.com) (formerly Kandji) endpoint
 management: blueprints and their assignments, custom scripts, custom profiles, custom
-and in-house apps, and tags, as code, plus lookups of devices and users.
+and in-house apps, tags, and device assignments, as code, plus lookups of devices and
+users.
 
 Published to the Terraform Registry as
 [`dmcphearson/iru`](https://registry.terraform.io/providers/dmcphearson/iru), with
@@ -65,6 +66,7 @@ example library items, blueprints and tags.
 | [`iru_in_house_app`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/in_house_app) | resource | In-house `.ipa` apps for iPhone, iPad and Apple TV; uploads from `source` |
 | [`iru_custom_profile`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/custom_profile) | resource | Custom configuration profiles from a `.mobileconfig` |
 | [`iru_custom_script`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/custom_script) | resource | Custom scripts, with optional remediation |
+| [`iru_device`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/device) | resource | Asset tag, user, blueprint and tags of an enrolled device (import only; destroy never touches the device) |
 | [`iru_tag`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/tag) | resource | Tags |
 | [`iru_blueprints`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/blueprints) | data source | List blueprints, optionally by name |
 | [`iru_custom_profiles`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/custom_profiles) | data source | List custom profiles, optionally by name |
