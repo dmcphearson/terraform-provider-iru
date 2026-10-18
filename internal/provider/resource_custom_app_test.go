@@ -1,9 +1,11 @@
 package provider
 
 import (
+	"context"
 	"testing"
 
 	"github.com/dmcphearson/terraform-provider-iru/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -62,5 +64,14 @@ func TestApplyAppResponse_UnsetScriptAdoptsEmpty(t *testing.T) {
 
 	if dst.AuditScript.IsNull() || dst.AuditScript.ValueString() != "" {
 		t.Errorf("audit_script = %v, want empty string adopted", dst.AuditScript)
+	}
+}
+
+// file_url is a signed download link; plans must not print it.
+func TestCustomAppFileURLSensitive(t *testing.T) {
+	var resp resource.SchemaResponse
+	(&customAppResource{}).Schema(context.Background(), resource.SchemaRequest{}, &resp)
+	if !resp.Schema.Attributes["file_url"].IsSensitive() {
+		t.Error("file_url is not sensitive")
 	}
 }

@@ -155,7 +155,11 @@ func (r *customAppResource) Schema(ctx context.Context, req resource.SchemaReque
 				MarkdownDescription: "Whether the app is marked recommended in Self Service.",
 				Default:             booldefault.StaticBool(false),
 			},
-			"file_url":     computedStr("Short-lived download URL for the current binary."),
+			"file_url": schema.StringAttribute{
+				Computed:            true,
+				Sensitive:           true,
+				MarkdownDescription: "Short-lived signed download URL for the current binary. Sensitive, so plans do not print it.",
+			},
 			"file_updated": computedStr("Timestamp the binary was last updated."),
 			"sha256":       computedStr("SHA256 of the current binary, as reported by the API."),
 			"file_size": schema.Int64Attribute{

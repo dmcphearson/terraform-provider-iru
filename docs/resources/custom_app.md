@@ -58,7 +58,7 @@ resource "iru_custom_app" "legacy_tool" {
 
 - `file_size` (Number) Size in bytes of the current binary.
 - `file_updated` (String) Timestamp the binary was last updated.
-- `file_url` (String) Short-lived download URL for the current binary.
+- `file_url` (String, Sensitive) Short-lived signed download URL for the current binary. Sensitive, so plans do not print it.
 - `id` (String) Unique identifier of the custom app.
 - `sha256` (String) SHA256 of the current binary, as reported by the API.
 - `source_sha256` (String) SHA256 of the file at `source`, computed at plan time. A change triggers a new upload.
