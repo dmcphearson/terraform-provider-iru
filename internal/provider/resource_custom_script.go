@@ -21,6 +21,7 @@ var (
 	_ resource.Resource                = &customScriptResource{}
 	_ resource.ResourceWithConfigure   = &customScriptResource{}
 	_ resource.ResourceWithImportState = &customScriptResource{}
+	_ resource.ResourceWithIdentity    = &customScriptResource{}
 )
 
 func NewCustomScriptResource() resource.Resource { return &customScriptResource{} }
@@ -146,6 +147,7 @@ func (r *customScriptResource) Create(ctx context.Context, req resource.CreateRe
 	// returns the self-service fields).
 	applyCustomScriptResponse(&plan, out, plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, plan.ID)...)
 }
 
 func (r *customScriptResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -167,6 +169,7 @@ func (r *customScriptResource) Read(ctx context.Context, req resource.ReadReques
 
 	applyCustomScriptResponse(&state, out, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, state.ID)...)
 }
 
 func (r *customScriptResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -184,6 +187,7 @@ func (r *customScriptResource) Update(ctx context.Context, req resource.UpdateRe
 
 	applyCustomScriptResponse(&plan, out, plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, plan.ID)...)
 }
 
 func (r *customScriptResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -201,7 +205,11 @@ func (r *customScriptResource) Delete(ctx context.Context, req resource.DeleteRe
 }
 
 func (r *customScriptResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	resource.ImportStatePassthroughWithIdentity(ctx, path.Root("id"), path.Root("id"), req, resp)
+}
+
+func (r *customScriptResource) IdentitySchema(ctx context.Context, req resource.IdentitySchemaRequest, resp *resource.IdentitySchemaResponse) {
+	resp.IdentitySchema = idIdentitySchema()
 }
 
 // modelToCustomScript builds the API request from the plan, sending only the fields

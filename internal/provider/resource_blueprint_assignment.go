@@ -6,11 +6,14 @@ import (
 	"strings"
 
 	"github.com/dmcphearson/terraform-provider-iru/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/identityschema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -18,6 +21,7 @@ var (
 	_ resource.Resource                = &blueprintAssignmentResource{}
 	_ resource.ResourceWithConfigure   = &blueprintAssignmentResource{}
 	_ resource.ResourceWithImportState = &blueprintAssignmentResource{}
+	_ resource.ResourceWithIdentity    = &blueprintAssignmentResource{}
 )
 
 func NewBlueprintAssignmentResource() resource.Resource { return &blueprintAssignmentResource{} }
@@ -28,6 +32,12 @@ type blueprintAssignmentResource struct {
 
 type blueprintAssignmentModel struct {
 	ID               types.String `tfsdk:"id"`
+	BlueprintID      types.String `tfsdk:"blueprint_id"`
+	LibraryItemID    types.String `tfsdk:"library_item_id"`
+	AssignmentNodeID types.String `tfsdk:"assignment_node_id"`
+}
+
+type blueprintAssignmentIdentityModel struct {
 	BlueprintID      types.String `tfsdk:"blueprint_id"`
 	LibraryItemID    types.String `tfsdk:"library_item_id"`
 	AssignmentNodeID types.String `tfsdk:"assignment_node_id"`
@@ -110,6 +120,7 @@ func (r *blueprintAssignmentResource) Create(ctx context.Context, req resource.C
 	}
 	plan.ID = types.StringValue(assignmentID(plan))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(setAssignmentIdentity(ctx, resp.Identity, plan)...)
 }
 
 func (r *blueprintAssignmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -133,6 +144,7 @@ func (r *blueprintAssignmentResource) Read(ctx context.Context, req resource.Rea
 	}
 	state.ID = types.StringValue(assignmentID(state))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(setAssignmentIdentity(ctx, resp.Identity, state)...)
 }
 
 // Update never runs: every attribute is RequiresReplace.
@@ -156,18 +168,69 @@ func (r *blueprintAssignmentResource) Delete(ctx context.Context, req resource.D
 	}
 }
 
-// ImportState accepts "blueprint_id:library_item_id[:assignment_node_id]".
+// ImportState accepts "blueprint_id:library_item_id[:assignment_node_id]", or an
+// import block identity with the same attributes.
 func (r *blueprintAssignmentResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	parts := strings.Split(req.ID, ":")
-	if len(parts) < 2 || len(parts) > 3 {
-		resp.Diagnostics.AddError("Invalid import ID",
-			"expected blueprint_id:library_item_id[:assignment_node_id], got: "+req.ID)
-		return
+	var m blueprintAssignmentModel
+	if req.ID != "" {
+		parts := strings.Split(req.ID, ":")
+		if len(parts) < 2 || len(parts) > 3 {
+			resp.Diagnostics.AddError("Invalid import ID",
+				"expected blueprint_id:library_item_id[:assignment_node_id], got: "+req.ID)
+			return
+		}
+		m.BlueprintID = types.StringValue(parts[0])
+		m.LibraryItemID = types.StringValue(parts[1])
+		if len(parts) == 3 {
+			m.AssignmentNodeID = types.StringValue(parts[2])
+		}
+	} else {
+		var ident blueprintAssignmentIdentityModel
+		resp.Diagnostics.Append(req.Identity.Get(ctx, &ident)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		m.BlueprintID = ident.BlueprintID
+		m.LibraryItemID = ident.LibraryItemID
+		if ident.AssignmentNodeID.ValueString() != "" {
+			m.AssignmentNodeID = ident.AssignmentNodeID
+		}
 	}
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("blueprint_id"), parts[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("library_item_id"), parts[1])...)
-	if len(parts) == 3 {
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("assignment_node_id"), parts[2])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("blueprint_id"), m.BlueprintID)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("library_item_id"), m.LibraryItemID)...)
+	if !m.AssignmentNodeID.IsNull() {
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("assignment_node_id"), m.AssignmentNodeID)...)
 	}
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), assignmentID(m))...)
+}
+
+func (r *blueprintAssignmentResource) IdentitySchema(ctx context.Context, req resource.IdentitySchemaRequest, resp *resource.IdentitySchemaResponse) {
+	resp.IdentitySchema = identityschema.Schema{
+		Attributes: map[string]identityschema.Attribute{
+			"blueprint_id": identityschema.StringAttribute{
+				RequiredForImport: true,
+				Description:       "ID of the blueprint.",
+			},
+			"library_item_id": identityschema.StringAttribute{
+				RequiredForImport: true,
+				Description:       "ID of the assigned library item.",
+			},
+			"assignment_node_id": identityschema.StringAttribute{
+				OptionalForImport: true,
+				Description:       "Assignment node ID, for map blueprints.",
+			},
+		},
+	}
+}
+
+// setAssignmentIdentity mirrors setIDIdentity for the composite assignment key.
+func setAssignmentIdentity(ctx context.Context, identity *tfsdk.ResourceIdentity, m blueprintAssignmentModel) diag.Diagnostics {
+	if identity == nil {
+		return nil
+	}
+	return identity.Set(ctx, blueprintAssignmentIdentityModel{
+		BlueprintID:      m.BlueprintID,
+		LibraryItemID:    m.LibraryItemID,
+		AssignmentNodeID: m.AssignmentNodeID,
+	})
 }

@@ -22,6 +22,7 @@ var (
 	_ resource.Resource                = &blueprintResource{}
 	_ resource.ResourceWithConfigure   = &blueprintResource{}
 	_ resource.ResourceWithImportState = &blueprintResource{}
+	_ resource.ResourceWithIdentity    = &blueprintResource{}
 )
 
 func NewBlueprintResource() resource.Resource { return &blueprintResource{} }
@@ -171,6 +172,7 @@ func (r *blueprintResource) Create(ctx context.Context, req resource.CreateReque
 	}
 	resp.Diagnostics.Append(applyBlueprint(&plan, out)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, plan.ID)...)
 }
 
 func (r *blueprintResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -190,6 +192,7 @@ func (r *blueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 	resp.Diagnostics.Append(applyBlueprint(&state, out)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, state.ID)...)
 }
 
 func (r *blueprintResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -210,6 +213,7 @@ func (r *blueprintResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 	resp.Diagnostics.Append(applyBlueprint(&plan, out)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, plan.ID)...)
 }
 
 func (r *blueprintResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -227,7 +231,11 @@ func (r *blueprintResource) Delete(ctx context.Context, req resource.DeleteReque
 }
 
 func (r *blueprintResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	resource.ImportStatePassthroughWithIdentity(ctx, path.Root("id"), path.Root("id"), req, resp)
+}
+
+func (r *blueprintResource) IdentitySchema(ctx context.Context, req resource.IdentitySchemaRequest, resp *resource.IdentitySchemaResponse) {
+	resp.IdentitySchema = idIdentitySchema()
 }
 
 // blueprintFromModel builds the API payload from the plan/state model.

@@ -20,6 +20,7 @@ var (
 	_ resource.Resource                = &customAppResource{}
 	_ resource.ResourceWithConfigure   = &customAppResource{}
 	_ resource.ResourceWithImportState = &customAppResource{}
+	_ resource.ResourceWithIdentity    = &customAppResource{}
 )
 
 func NewCustomAppResource() resource.Resource { return &customAppResource{} }
@@ -183,6 +184,7 @@ func (r *customAppResource) Create(ctx context.Context, req resource.CreateReque
 	}
 	applyAppResponse(&plan, out, plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, plan.ID)...)
 }
 
 func (r *customAppResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -202,6 +204,7 @@ func (r *customAppResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 	applyAppResponse(&state, out, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, state.ID)...)
 }
 
 func (r *customAppResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -217,6 +220,7 @@ func (r *customAppResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 	applyAppResponse(&plan, out, plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, plan.ID)...)
 }
 
 func (r *customAppResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -234,7 +238,11 @@ func (r *customAppResource) Delete(ctx context.Context, req resource.DeleteReque
 }
 
 func (r *customAppResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	resource.ImportStatePassthroughWithIdentity(ctx, path.Root("id"), path.Root("id"), req, resp)
+}
+
+func (r *customAppResource) IdentitySchema(ctx context.Context, req resource.IdentitySchemaRequest, resp *resource.IdentitySchemaResponse) {
+	resp.IdentitySchema = idIdentitySchema()
 }
 
 func appModelToClient(m customAppModel) client.CustomApp {

@@ -17,6 +17,7 @@ var (
 	_ resource.Resource                = &tagResource{}
 	_ resource.ResourceWithConfigure   = &tagResource{}
 	_ resource.ResourceWithImportState = &tagResource{}
+	_ resource.ResourceWithIdentity    = &tagResource{}
 )
 
 func NewTagResource() resource.Resource { return &tagResource{} }
@@ -78,6 +79,7 @@ func (r *tagResource) Create(ctx context.Context, req resource.CreateRequest, re
 	plan.ID = types.StringValue(out.ID)
 	plan.Name = types.StringValue(out.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, plan.ID)...)
 }
 
 func (r *tagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -98,6 +100,7 @@ func (r *tagResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	}
 	state.Name = types.StringValue(out.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, state.ID)...)
 }
 
 func (r *tagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -113,6 +116,7 @@ func (r *tagResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	}
 	plan.Name = types.StringValue(out.Name)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, plan.ID)...)
 }
 
 func (r *tagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -130,5 +134,9 @@ func (r *tagResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 }
 
 func (r *tagResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	resource.ImportStatePassthroughWithIdentity(ctx, path.Root("id"), path.Root("id"), req, resp)
+}
+
+func (r *tagResource) IdentitySchema(ctx context.Context, req resource.IdentitySchemaRequest, resp *resource.IdentitySchemaResponse) {
+	resp.IdentitySchema = idIdentitySchema()
 }

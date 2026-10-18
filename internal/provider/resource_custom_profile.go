@@ -17,6 +17,7 @@ var (
 	_ resource.Resource                = &customProfileResource{}
 	_ resource.ResourceWithConfigure   = &customProfileResource{}
 	_ resource.ResourceWithImportState = &customProfileResource{}
+	_ resource.ResourceWithIdentity    = &customProfileResource{}
 )
 
 func NewCustomProfileResource() resource.Resource { return &customProfileResource{} }
@@ -113,6 +114,7 @@ func (r *customProfileResource) Create(ctx context.Context, req resource.CreateR
 	}
 	applyProfileResponse(&plan, out)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, plan.ID)...)
 }
 
 func (r *customProfileResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -133,6 +135,7 @@ func (r *customProfileResource) Read(ctx context.Context, req resource.ReadReque
 	// profile_file is not returned by the API; keep the configured value as-is.
 	applyProfileResponse(&state, out)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, state.ID)...)
 }
 
 func (r *customProfileResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -151,6 +154,7 @@ func (r *customProfileResource) Update(ctx context.Context, req resource.UpdateR
 	}
 	applyProfileResponse(&plan, out)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(setIDIdentity(ctx, resp.Identity, plan.ID)...)
 }
 
 func (r *customProfileResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -168,7 +172,11 @@ func (r *customProfileResource) Delete(ctx context.Context, req resource.DeleteR
 }
 
 func (r *customProfileResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	resource.ImportStatePassthroughWithIdentity(ctx, path.Root("id"), path.Root("id"), req, resp)
+}
+
+func (r *customProfileResource) IdentitySchema(ctx context.Context, req resource.IdentitySchemaRequest, resp *resource.IdentitySchemaResponse) {
+	resp.IdentitySchema = idIdentitySchema()
 }
 
 func profileInput(m customProfileModel, includeFile bool) client.CustomProfileInput {
