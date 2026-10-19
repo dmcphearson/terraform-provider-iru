@@ -351,3 +351,45 @@ func NewDeviceListResource() list.ListResource {
 		},
 	}
 }
+
+// NewDeviceNoteListResource lists device notes. Without device_id it reads the
+// notes of every device, one request per device.
+func NewDeviceNoteListResource() list.ListResource {
+	return &iruListResource{
+		typeName: "device_note", filterAttr: "device_id",
+		filterDesc: "Only list notes on the device with this ID. Recommended on large tenants.",
+		entries: func(ctx context.Context, c *client.Client, filter string) ([]listEntry, error) {
+			devices := []client.Device{{ID: filter}}
+			if filter == "" {
+				var err error
+				if devices, err = c.ListDevices(ctx, client.DeviceFilter{}); err != nil {
+					return nil, err
+				}
+			}
+			var out []listEntry
+			for _, d := range devices {
+				notes, err := c.ListDeviceNotes(ctx, d.ID)
+				if err != nil {
+					return nil, err
+				}
+				for i := range notes {
+					m := &deviceNoteModel{DeviceID: types.StringValue(d.ID), Content: types.StringNull()}
+					applyDeviceNote(m, &notes[i])
+					name := noteText(notes[i].Content)
+					if r := []rune(name); len(r) > 40 {
+						name = string(r[:40]) + "..."
+					}
+					if d.Name != "" {
+						name = d.Name + ": " + name
+					}
+					out = append(out, listEntry{
+						displayName: name,
+						identity:    deviceNoteIdentityModel{DeviceID: m.DeviceID, NoteID: m.NoteID},
+						load:        func(context.Context) (any, error) { return m, nil },
+					})
+				}
+			}
+			return out, nil
+		},
+	}
+}

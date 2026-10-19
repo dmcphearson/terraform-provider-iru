@@ -122,6 +122,7 @@ func (p *iruProvider) Resources(ctx context.Context) []func() resource.Resource 
 		NewBlueprintAssignmentResource,
 		NewInHouseAppResource,
 		NewDeviceResource,
+		NewDeviceNoteResource,
 	}
 }
 
@@ -133,6 +134,7 @@ func (p *iruProvider) ListResources(ctx context.Context) []func() list.ListResou
 		NewCustomProfileListResource,
 		NewCustomScriptListResource,
 		NewDeviceListResource,
+		NewDeviceNoteListResource,
 		NewInHouseAppListResource,
 		NewTagListResource,
 	}

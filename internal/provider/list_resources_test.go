@@ -21,6 +21,7 @@ func fakeTenant(t *testing.T) *client.Client {
 	t.Helper()
 	pages := map[string]string{
 		"/api/v1/devices":                          `[{"device_id":"d1","device_name":"Mac","serial_number":"C02","user":"","tags":["eng"]}]`,
+		"/api/v1/devices/d1/notes":                 `[{"note_id":"n1","content":"<p>Loaner</p>","author":"Admin"}]`,
 		"/api/v1/tags":                             `{"count":1,"results":[{"id":"t1","name":"Eng"}]}`,
 		"/api/v1/library/custom-scripts":           `{"count":1,"results":[{"id":"s1","name":"Hello"}]}`,
 		"/api/v1/library/custom-scripts/s1":        `{"id":"s1","name":"Hello","execution_frequency":"once","script":"echo hi","active":true}`,
@@ -114,10 +115,11 @@ func TestListResources(t *testing.T) {
 	cases := []struct {
 		newList     func() list.ListResource
 		displayName string
-		identityID  string // id identity, or library_item_id for assignments
+		identityID  string // id identity, library_item_id for assignments, note_id for notes
 	}{
 		{NewTagListResource, "Eng", "t1"},
 		{NewDeviceListResource, "Mac (C02)", "d1"},
+		{NewDeviceNoteListResource, "Mac: Loaner", "n1"},
 		{NewCustomScriptListResource, "Hello", "s1"},
 		{NewCustomProfileListResource, "Wifi", "p1"},
 		{NewCustomAppListResource, "Tool", "a1"},
@@ -134,9 +136,9 @@ func TestListResources(t *testing.T) {
 			if r.DisplayName != tc.displayName {
 				t.Errorf("display name = %q, want %q", r.DisplayName, tc.displayName)
 			}
-			attr := "id"
-			if tc.displayName == "Core / Hello" {
-				attr = "library_item_id"
+			attr := map[string]string{"Core / Hello": "library_item_id", "Mac: Loaner": "note_id"}[tc.displayName]
+			if attr == "" {
+				attr = "id"
 			}
 			var got types.String
 			r.Identity.GetAttribute(context.Background(), path.Root(attr), &got)
