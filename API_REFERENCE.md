@@ -96,7 +96,10 @@ with `?page=` / `?limit=&offset=` pagination (limit max 300).
   last_enrollment, tags[]`. Polymorphic: non-applicable fields are blank. `user` is `""`
   when unassigned.
 - GET `/{device_id}/details`: large nested record, shape varies by platform.
-- PATCH `/{device_id}`, notes under `/{device_id}/notes`, secrets under `/{device_id}/secrets/*`.
+- PATCH `/{device_id}`, secrets under `/{device_id}/secrets/*`.
+- Notes: GET `/{device_id}/notes` (bare array), POST `{content}` (201), GET, PATCH `{content}`
+  and DELETE `/{device_id}/notes/{note_id}`. Item: `note_id, created_at, updated_at, author,
+  content`. Notes written in the UI come back as HTML (`<p>...&nbsp;</p>`).
 
 ## Users — /api/v1/users  (from the Postman collection; not yet verified live)
 - GET list: `{next, previous, results[]}` with a **cursor** in `next` (absolute URL; may

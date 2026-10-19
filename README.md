@@ -67,6 +67,7 @@ example library items, blueprints and tags.
 | [`iru_custom_profile`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/custom_profile) | resource | Custom configuration profiles from a `.mobileconfig` |
 | [`iru_custom_script`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/custom_script) | resource | Custom scripts, with optional remediation |
 | [`iru_device`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/device) | resource | Asset tag, user, blueprint and tags of an enrolled device (import only; destroy never touches the device) |
+| [`iru_device_note`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/device_note) | resource | A note on a device; changes only the note, never the device |
 | [`iru_tag`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/tag) | resource | Tags |
 | [`iru_blueprints`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/blueprints) | data source | List blueprints, optionally by name |
 | [`iru_custom_profiles`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/custom_profiles) | data source | List custom profiles, optionally by name |
