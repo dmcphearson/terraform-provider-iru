@@ -34,8 +34,9 @@ list "iru_blueprint_assignment" "all" {
 }
 ```
 
-Each list resource takes an optional filter: `name` for most types, and
-`blueprint_id` for `iru_blueprint_assignment`.
+Each list resource takes an optional filter: `name` for most types, `blueprint_id`
+for `iru_blueprint_assignment` and `iru_device`, and `device_id` for
+`iru_device_note`. `iru_blueprint_routing` needs none.
 
 ## 2. Generate config
 
@@ -73,3 +74,33 @@ terraform plan
 
 The plan should show imports and few or no changes. Apply it, then remove the import
 blocks.
+
+## Coming from another Iru provider
+
+State from another provider can't be handed over: resource names may match, but the
+schemas differ. Re-import instead. Nothing in Iru changes along the way.
+
+1. Back up state, then remove the old provider's resources from it. `state rm` only
+   edits state; it never touches Iru.
+
+   ```shell
+   terraform state pull > before-migration.tfstate
+   terraform state list | grep '^iru_' | xargs -n1 terraform state rm
+   ```
+
+2. Set the provider source to `dmcphearson/iru` in `required_providers` and run
+   `terraform init -upgrade`.
+3. Generate imports and config with steps 1 and 2 above. Either keep the generated
+   config, or keep the import blocks and adapt your existing config.
+4. Plan. It should show only imports; fix any attribute it wants to change.
+
+Coming from `MScottBlake/iru`, these differ:
+
+- `iru_blueprint_library_item` is `iru_blueprint_assignment`, with the same attributes.
+- `enrollment_code_active` on `iru_blueprint` and `iru_blueprint_routing` is
+  `enrollment_code = { is_active = ... }`; the code itself is `enrollment_code.code`.
+- `iru_device`: `device_name` is `name`.
+- `iru_in_house_app` uploads from `source` (a local `.ipa`) instead of `file_key`.
+- `iru_custom_profile` has no `runs_on_vision`.
+- ADE devices and integrations and Prism exports aren't supported yet. Exclude them
+  from the `state rm` in step 1 and keep them on the old provider.
