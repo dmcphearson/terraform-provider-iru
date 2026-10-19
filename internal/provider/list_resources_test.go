@@ -21,6 +21,7 @@ func fakeTenant(t *testing.T) *client.Client {
 	t.Helper()
 	pages := map[string]string{
 		"/api/v1/devices":                          `[{"device_id":"d1","device_name":"Mac","serial_number":"C02","user":"","tags":["eng"]}]`,
+		"/api/v1/blueprint-routing/":               `{"enrollment_code":{"code":"123456","is_active":true}}`,
 		"/api/v1/devices/d1/notes":                 `[{"note_id":"n1","content":"<p>Loaner</p>","author":"Admin"}]`,
 		"/api/v1/tags":                             `{"count":1,"results":[{"id":"t1","name":"Eng"}]}`,
 		"/api/v1/library/custom-scripts":           `{"count":1,"results":[{"id":"s1","name":"Hello"}]}`,
@@ -119,6 +120,7 @@ func TestListResources(t *testing.T) {
 	}{
 		{NewTagListResource, "Eng", "t1"},
 		{NewDeviceListResource, "Mac (C02)", "d1"},
+		{NewBlueprintRoutingListResource, "Blueprint Routing", "blueprint_routing"},
 		{NewDeviceNoteListResource, "Mac: Loaner", "n1"},
 		{NewCustomScriptListResource, "Hello", "s1"},
 		{NewCustomProfileListResource, "Wifi", "p1"},

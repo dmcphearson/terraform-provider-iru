@@ -393,3 +393,26 @@ func NewDeviceNoteListResource() list.ListResource {
 		},
 	}
 }
+
+// NewBlueprintRoutingListResource lists the tenant's one routing setting.
+func NewBlueprintRoutingListResource() list.ListResource {
+	return &iruListResource{
+		typeName: "blueprint_routing", filterAttr: "id",
+		filterDesc: "Unused: every tenant has exactly one routing setting.",
+		entries: func(ctx context.Context, c *client.Client, _ string) ([]listEntry, error) {
+			out, err := c.GetBlueprintRouting(ctx)
+			if err != nil {
+				return nil, err
+			}
+			m, diags := blueprintRoutingFrom(out)
+			if diags.HasError() {
+				return nil, fmt.Errorf("%v", diags)
+			}
+			return []listEntry{{
+				displayName: "Blueprint Routing",
+				identity:    idIdentityModel{ID: m.ID},
+				load:        func(context.Context) (any, error) { return &m, nil },
+			}}, nil
+		},
+	}
+}

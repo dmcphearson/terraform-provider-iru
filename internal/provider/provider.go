@@ -121,6 +121,7 @@ func (p *iruProvider) Resources(ctx context.Context) []func() resource.Resource 
 		NewBlueprintResource,
 		NewBlueprintAssignmentResource,
 		NewInHouseAppResource,
+		NewBlueprintRoutingResource,
 		NewDeviceResource,
 		NewDeviceNoteResource,
 	}
@@ -133,6 +134,7 @@ func (p *iruProvider) ListResources(ctx context.Context) []func() list.ListResou
 		NewCustomAppListResource,
 		NewCustomProfileListResource,
 		NewCustomScriptListResource,
+		NewBlueprintRoutingListResource,
 		NewDeviceListResource,
 		NewDeviceNoteListResource,
 		NewInHouseAppListResource,
@@ -148,6 +150,7 @@ func (p *iruProvider) DataSources(ctx context.Context) []func() datasource.DataS
 		NewCustomScriptsDataSource,
 		NewCustomProfilesDataSource,
 		NewBlueprintLibraryItemsDataSource,
+		NewBlueprintRoutingActivityDataSource,
 		NewDevicesDataSource,
 		NewDeviceDataSource,
 		NewDeviceDetailsDataSource,
