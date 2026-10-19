@@ -70,6 +70,7 @@ example library items, blueprints and tags.
 | [`iru_device_note`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/device_note) | resource | A note on a device; changes only the note, never the device |
 | [`iru_tag`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/tag) | resource | Tags |
 | [`iru_blueprints`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/blueprints) | data source | List blueprints, optionally by name |
+| [`iru_blueprint_library_items`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/blueprint_library_items) | data source | Library items assigned to a blueprint, including ones assigned outside Terraform |
 | [`iru_custom_profiles`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/custom_profiles) | data source | List custom profiles, optionally by name |
 | [`iru_custom_scripts`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/custom_scripts) | data source | List custom scripts, optionally by name |
 | [`iru_tags`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/tags) | data source | List tags, optionally by name |
