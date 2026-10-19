@@ -85,7 +85,7 @@ with `?page=` / `?limit=&offset=` pagination (limit max 300).
 - POST `/{id}/assign-library-item` (JSON): `{library_item_id, assignment_node_id?}`
   (`assignment_node_id` not required for maps without conditional logic).
 
-## Devices — /api/v1/devices  (from the Postman collection; not yet verified live)
+## Devices — /api/v1/devices  (reads and notes verified live; device PATCH not)
 - GET list returns a **bare array** (no envelope); `limit` (max 300) / `offset` paging.
   Filters: `blueprint_id`, `platform` (`Mac|iPad|iPhone|AppleTV`), `serial_number`,
   `device_name`, `user_email`, `user_name` (substring), `asset_tag`, `model`,
@@ -101,15 +101,16 @@ with `?page=` / `?limit=&offset=` pagination (limit max 300).
   and DELETE `/{device_id}/notes/{note_id}`. Item: `note_id, created_at, updated_at, author,
   content`. Notes written in the UI come back as HTML (`<p>...&nbsp;</p>`).
 
-## Blueprint Routing — /api/v1/blueprint-routing/  (from the Postman collection; not yet verified live)
-- One setting per tenant. GET/PATCH `/`: `{enrollment_code{code,is_active}}`; PATCH takes either key.
+## Blueprint Routing — /api/v1/blueprint-routing/  (GET and activity verified live; PATCH not)
+- One setting per tenant. Every endpoint returns 404 while routing is disabled on the tenant.
+  GET/PATCH `/`: `{enrollment_code{code,is_active}}`; PATCH takes either key.
   Routing rules are not exposed.
 - GET `/activity`: `{count,next,previous,results[]}`, limit/offset (max 300). Item: `id` (int),
   `activity_time`, `activity_type` (`routing_departure`, `computer_enrollment`, `enrollment`,
   `routing_config_edited`, ...), `user{id,email}` or null, `device_id` or null, `details` (shape
   varies by type).
 
-## Users — /api/v1/users  (from the Postman collection; not yet verified live)
+## Users — /api/v1/users  (verified live)
 - GET list: `{next, previous, results[]}` with a **cursor** in `next` (absolute URL; may
   name the web host, not the API host). Default 25 per page. Filters: `email`, `id`,
   `integration_id`, `archived`.

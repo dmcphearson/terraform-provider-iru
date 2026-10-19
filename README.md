@@ -53,8 +53,33 @@ resource "iru_custom_script" "hello" {
 
 The provider talks to one Iru tenant with a bearer API token. Set `IRU_API_URL` and
 `IRU_API_TOKEN` in the environment (preferred), or the `api_url` and `api_token`
-provider arguments. Grant the token API permissions for the objects you manage, for
-example library items, blueprints and tags.
+provider arguments.
+
+Iru API tokens are scoped per endpoint, and a missing permission shows up as a 403
+error. Enable only what you use; names are as they appear on the token's Permissions
+page.
+
+| Resource or data source | Permissions |
+|---|---|
+| `iru_tag`, `iru_tags` | Tags Management: Create Tag, Update Tag, List Tags, Delete Tag |
+| `iru_blueprint`, `iru_blueprints` | Blueprints Management: Create, Update, Get, List and Delete Blueprint |
+| `iru_blueprint_assignment`, `iru_blueprint_library_items` | Blueprints Management: Assign, Remove and List Library Items |
+| `iru_custom_script`, `iru_custom_scripts` | Custom Scripts: all |
+| `iru_custom_profile`, `iru_custom_profiles` | Custom Profiles: all |
+| `iru_custom_app` | Custom Apps: all |
+| `iru_in_house_app` | In-house Apps: all |
+| `iru_self_service_categories` | Self Service: List Self Service Categories |
+| `iru_devices`, `iru_device` (data source) | Device Information: Device list, Device ID |
+| `iru_device_details` | Device Information: Device details |
+| `iru_device` (resource) | Device Information: Device list, Device ID, Update a device |
+| `iru_device_note` | Device Information: Device notes, Note ID, Create note, Update note, Delete note |
+| `iru_users`, `iru_user` | Users: List users, Get user |
+| `iru_blueprint_routing` | Blueprint Routing: Get Blueprint Routing, Update Blueprint Routing |
+| `iru_blueprint_routing_activity` | Blueprint Routing: Blueprint Routing Activity |
+
+To adopt devices read-only, leave out Update a device: imports and plans still work,
+and no apply can change a device. `terraform query` uses the same permissions as the
+resource it lists.
 
 ## Resources and data sources
 
@@ -112,6 +137,7 @@ The Iru API enforces these. The provider checks the first three at plan time.
 - Scripts and custom apps with `no_enforcement` must set `show_in_self_service = true`.
 - `self_service_recommended` requires `show_in_self_service = true`.
 - Only active library items can be assigned to a blueprint.
+- Blueprint Routing endpoints return 404 when routing is disabled on the tenant.
 
 ## Status
 
