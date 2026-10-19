@@ -3,8 +3,10 @@ package client
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -73,5 +75,46 @@ func TestListUsers_FollowsCursor(t *testing.T) {
 	}
 	if users[0].Integration == nil || users[0].Integration.UUID != "i1" || users[1].Integration != nil {
 		t.Errorf("integrations = %+v, %+v", users[0].Integration, users[1].Integration)
+	}
+}
+
+// Notes live under their device; create and update send only the content.
+func TestDeviceNotes_Paths(t *testing.T) {
+	var got []string
+	c := newTestClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		got = append(got, r.Method+" "+r.URL.Path+" "+string(body))
+		if r.Method == "GET" && r.URL.Path == "/api/v1/devices/d1/notes" {
+			_, _ = w.Write([]byte(`[{"note_id":"n1","content":"<p>hi</p>"}]`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"note_id":"n1","content":"hi","author":"API"}`))
+	}))
+	ctx := context.Background()
+	notes, err := c.ListDeviceNotes(ctx, "d1")
+	if err != nil || len(notes) != 1 || notes[0].ID != "n1" {
+		t.Fatalf("list = %+v, %v", notes, err)
+	}
+	if n, err := c.CreateDeviceNote(ctx, "d1", "hi"); err != nil || n.ID != "n1" || n.Author != "API" {
+		t.Fatalf("create = %+v, %v", n, err)
+	}
+	if _, err := c.GetDeviceNote(ctx, "d1", "n1"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.UpdateDeviceNote(ctx, "d1", "n1", "bye"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.DeleteDeviceNote(ctx, "d1", "n1"); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"GET /api/v1/devices/d1/notes ",
+		`POST /api/v1/devices/d1/notes {"content":"hi"}`,
+		"GET /api/v1/devices/d1/notes/n1 ",
+		`PATCH /api/v1/devices/d1/notes/n1 {"content":"bye"}`,
+		"DELETE /api/v1/devices/d1/notes/n1 ",
+	}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("requests:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }
