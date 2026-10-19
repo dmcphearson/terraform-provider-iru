@@ -66,11 +66,13 @@ example library items, blueprints and tags.
 | [`iru_in_house_app`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/in_house_app) | resource | In-house `.ipa` apps for iPhone, iPad and Apple TV; uploads from `source` |
 | [`iru_custom_profile`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/custom_profile) | resource | Custom configuration profiles from a `.mobileconfig` |
 | [`iru_custom_script`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/custom_script) | resource | Custom scripts, with optional remediation |
+| [`iru_blueprint_routing`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/blueprint_routing) | resource | The tenant's Blueprint Routing enrollment code (import only; destroy leaves the setting as is) |
 | [`iru_device`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/device) | resource | Asset tag, user, blueprint and tags of an enrolled device (import only; destroy never touches the device) |
 | [`iru_device_note`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/device_note) | resource | A note on a device; changes only the note, never the device |
 | [`iru_tag`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/resources/tag) | resource | Tags |
 | [`iru_blueprints`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/blueprints) | data source | List blueprints, optionally by name |
 | [`iru_blueprint_library_items`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/blueprint_library_items) | data source | Library items assigned to a blueprint, including ones assigned outside Terraform |
+| [`iru_blueprint_routing_activity`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/blueprint_routing_activity) | data source | Recent Blueprint Routing activity: enrollments, routing decisions, config changes |
 | [`iru_custom_profiles`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/custom_profiles) | data source | List custom profiles, optionally by name |
 | [`iru_custom_scripts`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/custom_scripts) | data source | List custom scripts, optionally by name |
 | [`iru_tags`](https://registry.terraform.io/providers/dmcphearson/iru/latest/docs/data-sources/tags) | data source | List tags, optionally by name |
